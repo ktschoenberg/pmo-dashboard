@@ -1,0 +1,2069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PMO · Delivery Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --orange:#F96302; --orange-d:#D95000; --orange-pale:#FFF4EE; --orange-rim:#FDDCBB;
+      --g25:#FCFCFD; --g50:#F9FAFB; --g100:#F2F4F7; --g200:#E4E7EC;
+      --g300:#D0D5DD; --g400:#98A2B3; --g500:#667085; --g600:#475467;
+      --g700:#344054; --g900:#101828;
+      --green:#12B76A; --amber:#F79009; --red:#F04438;
+      --blue:#2E90FA; --purple:#9E77ED;
+      --xs:0 1px 2px rgba(16,24,40,.05);
+      --sm:0 1px 3px rgba(16,24,40,.1),0 1px 2px rgba(16,24,40,.06);
+      --md:0 4px 8px -2px rgba(16,24,40,.1),0 2px 4px -2px rgba(16,24,40,.06);
+      --lg:0 12px 16px -4px rgba(16,24,40,.08),0 4px 6px -2px rgba(16,24,40,.03);
+      --xl:0 20px 24px -4px rgba(16,24,40,.08),0 8px 8px -4px rgba(16,24,40,.03);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Inter',-apple-system,sans-serif;background:var(--g50);color:var(--g900);font-size:14px;line-height:1.5;min-height:100vh;}
+
+    .chip{font-size:11px;color:var(--g500);padding:4px 10px;border:1px solid var(--g200);border-radius:6px;background:var(--g50);}
+    .btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:7px;border:1px solid transparent;font:500 12px/1 'Inter',sans-serif;cursor:pointer;transition:all .14s;white-space:nowrap;}
+    .btn-primary{background:var(--orange);color:#fff;border-color:var(--orange);}
+    .btn-primary:hover{background:var(--orange-d);}
+    .btn-ghost{background:#fff;color:var(--g700);border-color:var(--g300);}
+    .btn-ghost:hover{background:var(--g50);}
+    .btn-active{background:var(--orange-pale);color:var(--orange);border-color:var(--orange-rim);}
+
+
+    /* ── SHELL ──────────────────────────────────────── */
+    .shell{display:flex;height:100vh;overflow:hidden;}
+
+    /* ── LEFT SIDEBAR ───────────────────────────────── */
+    .lsidebar{width:220px;flex-shrink:0;background:#0C111D;display:flex;flex-direction:column;overflow-y:auto;}
+    .ls-brand{display:flex;align-items:center;gap:9px;padding:16px 14px 12px;border-bottom:1px solid rgba(255,255,255,.07);}
+    .ls-mark{width:30px;height:30px;border-radius:7px;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;letter-spacing:-.02em;}
+    .ls-appname{font-size:12px;font-weight:700;color:#fff;line-height:1.25;}
+    .ls-appsub{font-size:10.5px;color:rgba(255,255,255,.5);margin-top:1px;}
+    .ls-nav{padding:8px 6px;flex:1;}
+    .ls-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:#fff;transition:background .12s;border:none;background:none;width:100%;text-align:left;font-family:'Inter',sans-serif;margin-bottom:1px;}
+    .ls-item:hover{background:#161B27;}
+    .ls-item.active{background:#1D2939;font-weight:600;}
+    .ls-item svg{width:15px;height:15px;flex-shrink:0;color:#fff;opacity:1;transition:opacity .12s;}
+    .ls-item:hover svg,.ls-item.active svg{opacity:1;}
+    .ls-count{margin-left:auto;font-size:10px;font-weight:600;color:#fff;background:rgba(255,255,255,.12);padding:1px 7px;border-radius:10px;}
+    .ls-item.active .ls-count{color:rgba(255,255,255,.7);}
+    .ls-divider{height:1px;background:rgba(255,255,255,.06);margin:6px 8px;}
+    .ls-footer{padding:10px 12px 14px;border-top:1px solid rgba(255,255,255,.07);font-size:11px;color:rgba(255,255,255,.5);line-height:1.7;}
+    .ls-footer strong{color:#fff;display:block;font-size:11.5px;margin-bottom:1px;}
+
+    /* ── MAIN CONTENT ───────────────────────────────── */
+    .content{flex:1;overflow-y:auto;padding:24px 28px 60px;min-width:0;}
+
+    /* ── KPI GRID ───────────────────────────────────── */
+    .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:22px;}
+    .kpi{background:#fff;border:1px solid var(--g200);border-radius:12px;padding:14px 18px;box-shadow:var(--xs);}
+    .kpi-label{font-size:11px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+    .kpi-val{font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1;margin-bottom:3px;}
+    .kpi-sub{font-size:11px;color:var(--g400);}
+
+    /* ── SECTION HEAD ───────────────────────────────── */
+    .sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    .sec-title{font-size:14px;font-weight:700;color:var(--g900);}
+    .sec-meta{font-size:12px;color:var(--g400);}
+
+    /* ── FILTER BAR ─────────────────────────────────── */
+    .filter-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+    .filter-lbl{font-size:11px;font-weight:600;color:var(--g500);margin-right:2px;}
+    .dr-btn{font-size:11px;font-weight:600;padding:4px 11px;border-radius:6px;border:1px solid var(--g200);background:var(--g50);color:var(--g600);cursor:pointer;transition:all .13s;line-height:1.4;font-family:'Inter',sans-serif;white-space:nowrap;}
+    .dr-btn:hover{background:var(--g100);border-color:var(--g300);color:var(--g900);}
+    .dr-btn.active{background:var(--orange);color:#fff;border-color:var(--orange);}
+
+    /* ── CARDS GRID ─────────────────────────────────── */
+    .c-actions{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+    .c-actions-right{display:flex;align-items:center;gap:6px;}
+    .cards-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+
+    /* ── PROJECT CARD ───────────────────────────────── */
+    .proj-card{background:#fff;border:1px solid var(--g200);border-radius:12px;cursor:pointer;transition:box-shadow .15s,transform .1s;box-shadow:0 1px 2px rgba(16,24,40,.05);display:flex;flex-direction:column;position:relative;}
+    .proj-card:hover{box-shadow:0 4px 8px -2px rgba(16,24,40,.1),0 2px 4px -2px rgba(16,24,40,.06);transform:translateY(-1px);border-color:var(--g300);}
+    .proj-card.selected{border-color:var(--orange);box-shadow:0 0 0 3px rgba(249,99,2,.1),0 4px 8px -2px rgba(16,24,40,.1);}
+    .card-body{padding:16px 18px;display:flex;flex-direction:column;flex:1;}
+    .card-row1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px;}
+    .card-badges{display:flex;gap:4px;flex-wrap:wrap;}
+    .card-week{font-size:10px;color:var(--g400);white-space:nowrap;margin-top:2px;flex-shrink:0;}
+    .card-name{font-size:13px;font-weight:600;color:var(--g900);line-height:1.4;margin-bottom:2px;}
+    .card-owner{font-size:12px;color:var(--g500);margin-bottom:12px;}
+    .card-desc{font-size:12px;color:var(--g500);line-height:1.55;margin-bottom:11px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+    .card-snippet{font-size:12px;color:var(--g600);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-top:10px;border-top:1px solid var(--g100);margin-top:auto;margin-bottom:10px;}
+    .card-area{display:flex;align-items:center;gap:5px;}
+    .card-area-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;opacity:.6;}
+    .card-area-lbl{font-size:11px;color:var(--g400);}
+    .card-upd{position:absolute;top:14px;right:14px;width:6px;height:6px;border-radius:50%;background:var(--orange);display:none;}
+    .card-upd.on{display:block;}
+
+    /* ── BADGES — Untitled UI v8 soft style ─────────── */
+    .badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:6px;font-size:11.5px;font-weight:500;white-space:nowrap;line-height:1.5;}
+    .badge::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+    .bs-green {background:#ECFDF3;color:#027A48;}.bs-green::before{background:#12B76A;}
+    .bs-amber {background:#FFFAEB;color:#B54708;}.bs-amber::before{background:#F79009;}
+    .bs-red   {background:#FEF3F2;color:#B42318;}.bs-red::before{background:#F04438;}
+    .bs-blue  {background:#EFF8FF;color:#175CD3;}.bs-blue::before{background:#2E90FA;}
+    .bs-purple{background:#F4F3FF;color:#5925DC;}.bs-purple::before{background:#7A5AF8;}
+    .bp-critical{background:#FEF3F2;color:#B42318;}.bp-critical::before{background:#F04438;}
+    .bp-high  {background:#FFFAEB;color:#B54708;}.bp-high::before{background:#F79009;}
+    .bp-medium{background:#F8F9FC;color:#344054;}.bp-medium::before{background:#98A2B3;}
+
+    /* ── SHARED BULLET LIST & HISTORY SUBHEADS ──────── */
+    .bullet-list{list-style:none;padding:0;margin:0;}
+    .bullet-list li{font-size:12px;color:var(--g700);line-height:1.6;padding-left:14px;position:relative;margin-bottom:2px;}
+    .bullet-list li::before{content:'•';position:absolute;left:2px;color:var(--g400);}
+    .bullet-list li.sub{padding-left:28px;color:var(--g500);}
+    .bullet-list li.sub::before{content:'○';left:14px;font-size:10px;}
+    .bullet-list li.sub2{padding-left:42px;color:var(--g500);}
+    .bullet-list li.sub2::before{content:'▪';left:28px;font-size:8px;}
+    .hist-sub-section{margin-bottom:8px;}
+    .hist-sub-lbl{font-size:10px;font-weight:700;color:var(--g500);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+
+    /* ── MODAL ──────────────────────────────────────── */
+    .overlay{position:fixed;inset:0;z-index:900;background:rgba(16,24,40,.45);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:16px;}
+    .modal{background:#fff;border-radius:14px;width:100%;max-width:640px;max-height:94vh;overflow-y:auto;box-shadow:var(--xl);}
+    .mhead{padding:20px 20px 0;display:flex;align-items:flex-start;justify-content:space-between;}
+    .mttl{font-size:16px;font-weight:700;}
+    .msub{font-size:12px;color:var(--g500);margin-top:2px;}
+    .mbody{padding:16px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .mbody .s2{grid-column:1/-1;}
+    .mfoot{padding:10px 20px 18px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--g100);}
+    .fg{display:flex;flex-direction:column;gap:4px;}
+    .fg label{font-size:12px;font-weight:500;color:var(--g700);}
+    .fg input,.fg select,.fg textarea{width:100%;padding:7px 10px;border:1px solid var(--g300);border-radius:6px;font:13px 'Inter',sans-serif;color:var(--g900);background:#fff;outline:none;transition:border-color .14s;}
+    .fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--orange);box-shadow:0 0 0 2px rgba(249,99,2,.1);}
+    .fg textarea{resize:vertical;min-height:64px;}
+    .rag-opts{display:flex;gap:5px;}
+    .rag-opt{flex:1;padding:6px 4px;border:2px solid var(--g200);border-radius:6px;background:#fff;cursor:pointer;text-align:center;font:500 11px 'Inter',sans-serif;color:var(--g500);transition:all .13s;}
+    .rag-opt.sg{border-color:var(--green);background:#ECFDF3;color:#027A48;}
+    .rag-opt.sa{border-color:var(--amber);background:#FFFAEB;color:#B54708;}
+    .rag-opt.sr{border-color:var(--red);background:#FEF3F2;color:#B42318;}
+
+    /* ── TOAST ──────────────────────────────────────── */
+    .toast{position:fixed;bottom:18px;right:18px;z-index:9999;background:var(--g900);color:#fff;padding:9px 13px;border-radius:7px;font:500 12px 'Inter',sans-serif;box-shadow:var(--lg);transform:translateY(50px);opacity:0;transition:all .2s;pointer-events:none;}
+    .toast.on{transform:none;opacity:1;}
+
+    /* ── Search bar ──────────────────────────────── */
+    .srch-wrap{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--g300);border-radius:7px;padding:5px 10px;min-width:220px;transition:border-color .14s;}
+    .srch-wrap:focus-within{border-color:var(--orange);box-shadow:0 0 0 2px rgba(249,99,2,.08);}
+    .srch-input{border:none;outline:none;font:13px 'Inter',sans-serif;color:var(--g900);background:transparent;flex:1;min-width:0;}
+    .srch-input::placeholder{color:var(--g400);}
+    /* ── Staleness & milestone ───────────────────── */
+    .stale-badge{font-size:10px;font-weight:600;color:var(--g400);background:var(--g100);padding:1px 7px;border-radius:10px;border:1px solid var(--g200);}
+    .ms-chip{font-size:10.5px;color:#175CD3;background:#EFF8FF;border:1px solid #B2DDFF;padding:2px 8px;border-radius:10px;display:inline-flex;align-items:center;gap:3px;}
+    /* ── Digest modal ────────────────────────────── */
+    .digest-overlay{position:fixed;inset:0;z-index:960;background:rgba(16,24,40,.45);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:16px;}
+    .digest-modal{background:#fff;border-radius:14px;width:100%;max-width:700px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--xl);}
+    .digest-body{flex:1;overflow-y:auto;padding:16px 24px 24px;}
+    .digest-text{font:12.5px/1.8 'Courier New',monospace;color:var(--g800);white-space:pre-wrap;word-break:break-word;background:var(--g50);border-radius:8px;padding:16px;}
+    /* ── PORTFOLIO VIEW ─────────────────────────────── */
+    .pf-row-item{padding:10px 0;cursor:pointer;transition:opacity .12s;}
+    .pf-row-item:hover{opacity:.75;}
+
+    @media print{.topbar,.edit-banner,.lsidebar,.btn{display:none!important;}.shell{height:auto;display:block;}.content{padding:0;}}
+
+    /* ── LEADERSHIP DETAIL MODAL ── */
+    .ld-overlay{position:fixed;inset:0;z-index:950;background:rgba(16,24,40,.45);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;}
+    .ld-modal{background:#fff;border-radius:16px;width:100%;max-width:660px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 24px -4px rgba(16,24,40,.14),0 8px 8px -4px rgba(16,24,40,.06);display:flex;flex-direction:column;}
+    .ld-head{padding:24px 26px 20px;border-bottom:1px solid var(--g200);}
+    .ld-meta-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+    .ld-area-tag{font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;color:#fff;letter-spacing:.03em;}
+    .ld-proj-name{font-size:21px;font-weight:700;color:var(--g900);line-height:1.2;margin:11px 0 4px;}
+    .ld-proj-sub{font-size:12.5px;color:var(--g500);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+    .ld-objective{margin-top:14px;font-size:13px;color:var(--g600);line-height:1.65;padding-left:12px;border-left:2px solid var(--g200);}
+    .ld-body{padding:22px 26px;flex:1;}
+    /* typography-first section blocks */
+    .ld-block{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid var(--g100);}
+    .ld-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+    .ld-sec-lbl{font-size:10px;font-weight:700;color:var(--g900);text-transform:uppercase;letter-spacing:.08em;margin-bottom:9px;display:flex;align-items:center;gap:5px;}
+    .ld-watch .ld-sec-lbl{color:#B54708;}
+    .ld-empty{padding:40px 26px;text-align:center;}
+    .ld-empty-icon{font-size:30px;margin-bottom:10px;}
+    .ld-empty-txt{font-size:13px;color:var(--g500);line-height:1.6;}
+    .ld-foot{padding:12px 26px 16px;border-top:1px solid var(--g100);flex-shrink:0;}
+    /* prev updates accordion */
+    .ld-hist{margin-top:18px;border-top:1px solid var(--g100);padding-top:16px;}
+    .ld-hist-lbl{font-size:10px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;}
+    .ld-hi{border:1px solid var(--g200);border-radius:8px;margin-bottom:6px;overflow:hidden;}
+    .ld-hi-head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;background:var(--g50);font-size:12px;font-weight:600;color:var(--g700);}
+    .ld-hi-head:hover{background:var(--g100);}
+    .ld-hi-body{display:none;padding:12px 14px;background:#fff;}
+    .ld-hi-body.open{display:block;}
+    /* leadership modal — world-class enhancements */
+    .ld-exec-summary{margin-top:14px;font-size:13px;color:var(--g700);line-height:1.7;padding:12px 16px;background:var(--g50);border-radius:8px;border-left:3px solid var(--g300);}
+    .ld-trend{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+    .ld-trend-up{background:#ECFDF3;color:#027A48;}
+    .ld-trend-stable{background:#F8F9FC;color:#344054;}
+    .ld-trend-down{background:#FEF3F2;color:#B42318;}
+    .ld-confidence{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:2px 8px;border-radius:10px;}
+    .ld-conf-high{background:#ECFDF3;color:#027A48;}
+    .ld-conf-medium{background:#FFFAEB;color:#B54708;}
+    .ld-conf-low{background:#FEF3F2;color:#B42318;}
+    .ld-progress-wrap{margin-top:14px;padding:14px 16px;background:#fff;border:1px solid var(--g200);border-radius:10px;}
+    .ld-progress-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;}
+    .ld-progress-nums{font-size:15px;font-weight:700;color:var(--g900);}
+    .ld-progress-pct{font-size:12px;font-weight:600;color:var(--g500);}
+    .ld-progress-track{height:4px;background:var(--g100);border-radius:4px;overflow:hidden;margin-bottom:6px;}
+    .ld-progress-fill{height:100%;border-radius:4px;transition:width .4s;}
+    .ld-progress-sub{font-size:11px;color:var(--g400);}
+    .ld-decisions{margin-bottom:22px;padding:14px 16px;background:#FFFBF5;border:1px solid #FEC84B;border-radius:10px;}
+    .ld-decisions-hdr{font-size:10px;font-weight:700;color:#B54708;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+    /* pm update modal — new fields */
+    .pu-conf-btn{padding:7px 14px;border:1px solid var(--g200);border-radius:6px;background:var(--g50);font:500 12px 'Inter',sans-serif;color:var(--g600);cursor:pointer;transition:all .15s;}
+    .pu-conf-btn:hover{background:var(--g100);}
+    .pu-conf-btn[data-conf="high"].active{border-color:#12B76A;background:#ECFDF3;color:#027A48;font-weight:600;}
+    .pu-conf-btn[data-conf="medium"].active{border-color:#F79009;background:#FFFAEB;color:#B54708;font-weight:600;}
+    .pu-conf-btn[data-conf="low"].active{border-color:#F04438;background:#FEF3F2;color:#B42318;font-weight:600;}
+    .pu-sec-decisions .pu-sec-lbl{color:#175CD3;}
+    .pu-sec-decisions .pu-item-dot{background:#2E90FA;}
+
+    /* ── PM UPDATE MODAL ── */
+    .pu-overlay{position:fixed;inset:0;z-index:960;background:rgba(16,24,40,.45);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px;}
+    .pu-modal{background:#fff;border-radius:16px;width:100%;max-width:700px;max-height:92vh;overflow:hidden;box-shadow:0 20px 24px -4px rgba(16,24,40,.14),0 8px 8px -4px rgba(16,24,40,.06);display:flex;flex-direction:column;}
+    .pu-head{padding:20px 24px 16px;border-bottom:1px solid var(--g200);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;}
+    .pu-title{font-size:16px;font-weight:700;color:var(--g900);}
+    .pu-step-lbl{font-size:11px;color:var(--g400);font-weight:500;margin-top:3px;}
+    .pu-body{padding:22px 24px;flex:1;overflow-y:auto;}
+    .pu-foot{padding:14px 24px 18px;border-top:1px solid var(--g100);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .pu-field-lbl{font-size:11.5px;font-weight:600;color:var(--g700);margin-bottom:6px;}
+    .pu-select,.pu-textarea{width:100%;box-sizing:border-box;border:1px solid var(--g300);border-radius:8px;font:13px/1.5 'Inter',sans-serif;color:var(--g900);background:#fff;outline:none;transition:border-color .15s,box-shadow .15s;}
+    .pu-select{padding:8px 12px;height:38px;cursor:pointer;}
+    .pu-textarea{padding:10px 12px;resize:vertical;min-height:180px;line-height:1.6;}
+    .pu-select:focus,.pu-textarea:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(249,99,2,.08);}
+    .pu-method-row{display:flex;gap:8px;margin:18px 0;}
+    .pu-method-btn{flex:1;padding:11px 14px;border:1px solid var(--g200);border-radius:8px;background:var(--g50);font:500 12.5px/1 'Inter',sans-serif;color:var(--g600);cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:7px;}
+    .pu-method-btn.active{border-color:var(--orange);background:#FFF4EE;color:var(--orange);font-weight:600;}
+    .pu-method-btn:hover:not(.active){background:var(--g100);}
+    .pu-parse-hint{font-size:11.5px;color:var(--g400);margin-top:7px;line-height:1.5;}
+    .pu-manual-note{padding:16px;background:var(--g50);border-radius:8px;font-size:12.5px;color:var(--g500);text-align:center;line-height:1.6;}
+    /* step 2 */
+    .pu-week-row{display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--g100);}
+    .pu-week-lbl{font-size:11.5px;font-weight:600;color:var(--g700);}
+    .pu-week-input{border:1px solid var(--g300);border-radius:6px;padding:5px 10px;font:12px 'Inter',sans-serif;color:var(--g700);outline:none;}
+    .pu-week-input:focus{border-color:var(--orange);}
+    .pu-sec{margin-bottom:24px;}
+    .pu-sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+    .pu-sec-lbl{font-size:10px;font-weight:700;color:var(--g900);text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:5px;}
+    .pu-sec-watch .pu-sec-lbl{color:#B54708;}
+    .pu-add-btn{font-size:11.5px;color:var(--orange);background:none;border:none;cursor:pointer;font-weight:600;padding:2px 0;}
+    .pu-add-btn:hover{opacity:.75;}
+    .pu-item{border:1px solid var(--g200);border-radius:8px;margin-bottom:6px;overflow:hidden;}
+    .pu-item-main{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#fff;}
+    .pu-item-dot{width:6px;height:6px;border-radius:50%;background:var(--g300);flex-shrink:0;}
+    .pu-sec-watch .pu-item-dot{background:#F79009;}
+    .pu-item-txt{flex:1;min-width:0;border:none;outline:none;font:13px 'Inter',sans-serif;color:var(--g800);background:transparent;}
+    .pu-item-txt::placeholder{color:var(--g400);}
+    .pu-item-del{width:22px;height:22px;border:none;background:none;cursor:pointer;color:var(--g400);display:flex;align-items:center;justify-content:center;border-radius:4px;flex-shrink:0;}
+    .pu-item-del:hover{background:var(--g100);color:var(--g600);}
+    .pu-item-meta{display:flex;gap:8px;padding:6px 12px 8px 28px;background:var(--g50);border-top:1px solid var(--g100);}
+    .pu-meta-in{flex:1;min-width:0;border:1px solid var(--g200);border-radius:6px;padding:5px 9px;font:12px 'Inter',sans-serif;color:var(--g700);background:#fff;outline:none;}
+    .pu-meta-in:focus{border-color:var(--orange);}
+    .pu-meta-in::placeholder{color:var(--g400);}
+    .pu-meta-date{max-width:140px;flex-shrink:0;}
+    .pu-parse-ok{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#ECFDF3;border:1px solid #A9EFC5;border-radius:8px;margin-bottom:18px;font-size:12.5px;color:#027A48;font-weight:500;}
+    .pu-form-sec-lbl{font-size:10px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--g100);}
+    .pu-input{width:100%;border:1px solid var(--g300);border-radius:6px;padding:7px 10px;font:13px 'Inter',sans-serif;color:var(--g900);background:#fff;outline:none;transition:border-color .14s;box-sizing:border-box;}
+    .pu-input:focus{border-color:var(--orange);box-shadow:0 0 0 2px rgba(249,99,2,.08);}
+    .pu-input::placeholder{color:var(--g400);}
+  </style>
+</head>
+<body>
+
+
+<!-- SHELL -->
+<div class="shell" id="shell">
+
+  <!-- LEFT SIDEBAR -->
+  <nav class="lsidebar">
+    <div class="ls-brand">
+      <div class="ls-mark">P</div>
+      <div>
+        <div class="ls-appname">PMO Dashboard</div>
+        <div class="ls-appsub">Delivery Management</div>
+      </div>
+    </div>
+    <div class="ls-nav">
+      <button class="ls-item active" id="pfNavBtn" onclick="showPortfolio(this)">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Home
+      </button>
+      <button class="ls-item" data-area="all" onclick="setArea('all',this)">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        Initiatives <span class="ls-count" id="sc-all">0</span>
+      </button>
+      <button class="ls-item" onclick="openContracts()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        Contract Renewals
+      </button>
+      <div class="ls-divider"></div>
+      <button class="ls-item" onclick="openClaire()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+        Chat with Claire
+        <span style="margin-left:auto;font-size:9px;font-weight:700;background:var(--orange);color:#fff;padding:1px 6px;border-radius:10px;letter-spacing:.3px;">NEW</span>
+      </button>
+    </div>
+    <div class="ls-footer">
+      <strong>FY26 Initiative Tracker</strong>
+      5 Product Areas · Weekly Updates<br>
+      <span id="footerCount">— projects tracked</span>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="content" id="content">
+    <div class="c-actions">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="srch-wrap">
+          <svg width="13" height="13" fill="none" stroke="var(--g400)" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" stroke-width="2"/><path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round"/></svg>
+          <input class="srch-input" id="srchInput" placeholder="Search projects…" oninput="setSearch(this.value)">
+          <button id="srchClear" style="display:none;border:none;background:none;cursor:pointer;color:var(--g400);padding:0;font-size:13px;line-height:1" onclick="clearSearch()">✕</button>
+        </div>
+        <span class="chip" id="updChip">—</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="btn btn-ghost" onclick="openDigest()">
+          <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+          Digest
+        </button>
+        <button class="btn btn-primary" onclick="openPMUpdate()">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>New PM Update
+        </button>
+      </div>
+    </div>
+    <div class="overview-row" id="overviewRow"></div>
+    <div id="areas"></div>
+  </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="mhead">
+      <div><div class="mttl" id="mttl">Add Project</div><div class="msub">* required fields</div></div>
+      <button onclick="closeModal()" style="width:26px;height:26px;border:none;border-radius:6px;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--g400)">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="mbody">
+      <div class="fg"><label>Project Name *</label><input id="fn" type="text" placeholder="e.g. SD-WAN Phase 2"></div>
+      <div class="fg"><label>Project Owner *</label><input id="fo" type="text" placeholder="e.g. Jane Smith"></div>
+      <div class="fg"><label>Product Area *</label>
+        <select id="fa">
+          <option value="dn">Distributed Network</option>
+          <option value="dcns">Data Center Network Services</option>
+          <option value="uc">Unified Communications</option>
+          <option value="natm">Network Automation &amp; Traffic Mgmt</option>
+        </select>
+      </div>
+      <div class="fg"><label>Execution Strategy / Dept</label><input id="fd" type="text" placeholder="e.g. Response &amp; Reliability"></div>
+      <div class="fg"><label>Clarity ID</label><input id="fcl" type="text" placeholder="e.g. PR000552"></div>
+      <div class="fg"><label>Priority</label>
+        <select id="fpr">
+          <option value="Critical">Critical Priority</option>
+          <option value="High">High Priority</option>
+          <option value="Medium">Medium Priority</option>
+        </select>
+      </div>
+      <div class="fg"><label>Status *</label>
+        <select id="fs">
+          <option value="on-track">On Track</option>
+          <option value="at-risk">At Risk</option>
+          <option value="off-track">Off Track</option>
+          <option value="complete">Complete</option>
+          <option value="on-hold">On Hold</option>
+        </select>
+      </div>
+      <div class="fg"><label>% Complete</label><input id="fp" type="number" min="0" max="100" placeholder="0"></div>
+      <div class="fg"><label>Start Date</label><input id="fsd" type="date"></div>
+      <div class="fg"><label>Target End Date</label><input id="fed" type="date"></div>
+      <div class="fg"><label>Budget Health</label>
+        <div class="rag-opts" id="bOpts">
+          <button type="button" class="rag-opt" data-v="green" onclick="pickRag('b','green',this)">Green</button>
+          <button type="button" class="rag-opt" data-v="amber" onclick="pickRag('b','amber',this)">Amber</button>
+          <button type="button" class="rag-opt" data-v="red"   onclick="pickRag('b','red',this)">Red</button>
+        </div><input type="hidden" id="fb" value="green">
+      </div>
+      <div class="fg"><label>Scope Health</label>
+        <div class="rag-opts" id="sOpts">
+          <button type="button" class="rag-opt" data-v="green" onclick="pickRag('s','green',this)">Green</button>
+          <button type="button" class="rag-opt" data-v="amber" onclick="pickRag('s','amber',this)">Amber</button>
+          <button type="button" class="rag-opt" data-v="red"   onclick="pickRag('s','red',this)">Red</button>
+        </div><input type="hidden" id="fsc" value="green">
+      </div>
+      <div class="fg s2"><label>Initiative Objective</label><textarea id="fobj" placeholder="High-level objective statement…"></textarea></div>
+      <div class="fg s2"><label>Status Note</label><textarea id="fnote" placeholder="Brief current status…"></textarea></div>
+      <div class="fg s2"><label>Key Risks &amp; Blockers</label><textarea id="frisks" placeholder="Active risks…"></textarea></div>
+      <div class="fg s2"><label>Next Steps</label><textarea id="fnext" placeholder="Upcoming milestones…"></textarea></div>
+    </div>
+    <div class="mfoot">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProject()">Save Project</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="ldModal"></div>
+
+<script>
+// ─── Config ───────────────────────────────────────────────────────────────────
+const KEY = 'pmo_v7';
+
+const AREAS = [
+  { id:'dn',   label:'Distributed Network',               color:'#4F46E5', sub:'Store Network Eng · Non-Store Network Eng · Network Operations' },
+  { id:'dcns', label:'Data Center Network Services',      color:'#0284C7', sub:'Data Center Infrastructure · Cloud Connectivity' },
+  { id:'uc',   label:'Unified Communications',            color:'#059669', sub:'Voice · Video · Collaboration Platforms' },
+  { id:'natm', label:'Network Automation & Traffic Mgmt', color:'#D97706', sub:'Automation Engineering · Traffic & Performance' },
+];
+
+const AREA_PM = {
+  dn:   'Annette Groves',
+  dcns: 'Shannon McDougal',
+  uc:   'Joey Agee',
+  natm: 'Kyla Stevenson',
+};
+
+const SC = {
+  'on-track':  { label:'On Track',  bc:'bs-green',  ringColor:'#12B76A' },
+  'at-risk':   { label:'At Risk',   bc:'bs-amber',  ringColor:'#F79009' },
+  'off-track': { label:'Off Track', bc:'bs-red',    ringColor:'#F04438' },
+  'complete':  { label:'Complete',  bc:'bs-blue',   ringColor:'#2E90FA' },
+  'on-hold':   { label:'On Hold',   bc:'bs-purple', ringColor:'#9E77ED' },
+};
+
+const PC = {
+  'Critical': 'bp-critical',
+  'High':     'bp-high',
+  'Medium':   'bp-medium',
+};
+
+// ─── Seed data (all 49 real projects) ────────────────────────────────────────
+const SEED_PROJECTS = [
+  // Distributed Network
+  { id:'dn01',  area:'dn',   name:'DN - Convert 7 BDC\'s to HDW',                          owner:'',dept:'Response & Reliability',  clarityId:'PR000552',priority:'High',    objective:'Convert 7 BDC\'s to HDW. 11 BDCs migrated to upgraded network infrastructure by end of Q4 2026',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dn02',  area:'dn',   name:'DN - DCNS L3 Operations',                                owner:'',dept:'Operations',              clarityId:'PR000542',priority:'Critical', objective:'Provide 24x7 L3 operational engineering support for Data Center Network Services platforms',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dn03',  area:'dn',   name:'DN - Distributed Network L3 Operations',                 owner:'',dept:'Operations',              clarityId:'PR000553',priority:'Critical', objective:'Provide 24x7 L3 operational engineering support for Distributed Network platforms',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dn04',  area:'dn',   name:'DN - AT&T Dedicated Internet & Comcast Broadband',       owner:'',dept:'Response & Reliability',  clarityId:'PR000552',priority:'High',    objective:'Deploy AT&T Dedicated Internet and Comcast Broadband circuits to 300 additional stores to strengthen WAN resiliency',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dn05',  area:'dn',   name:'DN - Corporate Office Starlink Deployment',               owner:'',dept:'Response & Reliability',  clarityId:'PR000552',priority:'High',    objective:'Complete full corporate office Starlink deployment',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dn06',  area:'dn',   name:'DN - Priority 0 Unplanned Business Requests',             owner:'',dept:'Operations',              clarityId:'PR000552',priority:'High',    objective:'Planned budget and resource coverage for urgent, unplanned requests impacting Store and Non-Store Network teams',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dn07',  area:'dn',   name:'DN - Store Starlink Deployment',                          owner:'',dept:'Response & Reliability',  clarityId:'PR000552',priority:'High',    objective:'Deploy Starlink at ~700 additional stores to complete full coverage across THD\'s store fleet',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dn08',  area:'dn',   name:'DN - New Site Deployments',                               owner:'',dept:'Response & Reliability',  clarityId:'PR000552',priority:'High',    objective:'Deploy network solutions to 16 new stores and 3 supply chain locations FY26',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dn09',  area:'dn',   name:'DN - Non-Store Network Engineering KTLO',                 owner:'',dept:'Operations',              clarityId:'PR000553',priority:'Critical', objective:'Ensure stability and operational readiness of non-store network environments through continuous KTLO support',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dn10',  area:'dn',   name:'DN - Non-Store Network Refresh',                          owner:'',dept:'Refresh',                 clarityId:'PR000554',priority:'High',    objective:'Refresh IDF infrastructure and Access Points at ~40 non-store locations',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dn11',  area:'dn',   name:'DN - NS Physical SDWAN Router Appliance Install',          owner:'',dept:'Response & Reliability',  clarityId:'PR000552',priority:'High',    objective:'Install two SDWAN routers at 50 non-store locations required due to servers being removed',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dn12',  area:'dn',   name:'DN - Replace Top 20 Cogent MPLS Circuits w/ AT&T ADI',   owner:'',dept:'Response & Reliability',  clarityId:'PR000552',priority:'High',    objective:'Reduce network costs by replacing top 20 most expensive Cogent MPLS circuits with AT&T ADI',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dn13',  area:'dn',   name:'DN - RTO Initiatives',                                    owner:'',dept:'Response & Reliability',  clarityId:'PR000552',priority:'High',    objective:'Design, install and implement network infrastructure solutions for return to office initiatives',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dn14',  area:'dn',   name:'DN - Store Cellular Coverage Improvements',               owner:'',dept:'Response & Reliability',  clarityId:'PR000552',priority:'Critical', objective:'Conduct discovery to identify opportunities to improve cellular coverage within THD stores',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dn15',  area:'dn',   name:'DN - Store Network Engineering KTLO',                     owner:'',dept:'Operations',              clarityId:'PR000553',priority:'Critical', objective:'Ensure stability and operational readiness of store network environments through continuous KTLO support',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dn16',  area:'dn',   name:'DN - Store Switch & Wireless Renewal Discovery',          owner:'',dept:'Response & Reliability',  clarityId:'PR000552',priority:'High',    objective:'Assess options ahead of August 2026 contract expiration for store switch and wireless infrastructure',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dn17',  area:'dn',   name:'DN - Supply Chain Network Segmentation',                  owner:'',dept:'Response & Reliability',  clarityId:'PR000552',priority:'Critical', objective:'Implement network segmentation at all Supply Chain locations to isolate critical systems and strengthen security',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  // Data Center Network Services
+  { id:'dc01',  area:'dcns', name:'DCNS - Data Center Network Services KTLO',                owner:'',dept:'Operations',              clarityId:'PR000542',priority:'Critical', objective:'Maintain stable & secure Data Center Network environments through proactive lifecycle management and incident response',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dc02',  area:'dcns', name:'DCNS - FY26 Cisco Refresh',                               owner:'',dept:'Refresh',                 clarityId:'PR000543',priority:'Critical', objective:'Refresh EOL/EOS Cisco devices that operate our Data Centers — replace and install 120 Cisco devices',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dc03',  area:'dcns', name:'DCNS - Contractor Warehouse DDI Standardization',          owner:'',dept:'Operations',              clarityId:'PR000542',priority:'High',    objective:'Standardize Contractor Warehouse DNS/DHCP systems so automation can handle project requests',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dc04',  area:'dcns', name:'DCNS - DDI Automation Project',                           owner:'',dept:'Operations',              clarityId:'PR000541',priority:'Critical', objective:'Automate DNS, DHCP, and IPAM work requests to deliver business agility',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dc05',  area:'dcns', name:'DCNS - DDI Infrastructure in Cloud Connect Centers',       owner:'',dept:'Operations',              clarityId:'PR000541',priority:'High',    objective:'Deploy DDI infrastructure in Cloud Connect Centers for centralized, highly available DNS, DHCP, and IPAM services',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dc06',  area:'dcns', name:'DCNS - FY26 DMVPN 2.0',                                  owner:'',dept:'Response & Reliability',  clarityId:'PR000541',priority:'High',    objective:'Deploy DMVPN to Cloud Connect Centers and improve security with certificate-based authentication',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dc07',  area:'dcns', name:'DCNS - Metal and Load Balancer Support',                  owner:'',dept:'Refresh',                 clarityId:'PR000543',priority:'Critical', objective:'Support F5 migration and assist with Metal deployment — transition from Citrix to F5 and Equinix Metal to Vantage',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dc08',  area:'dcns', name:'DCNS - Nvidia Management Switch Replacement',             owner:'',dept:'Refresh',                 clarityId:'PR000543',priority:'Critical', objective:'Replace all Nvidia management switches with company standard devices — 25 new managed switches',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dc09',  area:'dcns', name:'DCNS - Priority 0 Unplanned Business Requests',           owner:'',dept:'Refresh',                 clarityId:'PR000543',priority:'High',    objective:'Budget to handle large amounts of unknown requests from other teams including Cyber and Corporate initiatives',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dc10',  area:'dcns', name:'DCNS - FY26 SD-WAN Mexico',                               owner:'',dept:'Operations',              clarityId:'PR000541',priority:'High',    objective:'Deploy SD-WAN to 2 Mexico Cloud Connect Centers in Monterrey and Mexico City',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'dc11',  area:'dcns', name:'DCNS - Network Segmentation (Supply Chain)',              owner:'',dept:'Response & Reliability',  clarityId:'PR000541',priority:'Critical', objective:'Implement network segmentation at all Supply Chain locations — resolve Finding FND-7128',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  // Unified Communications
+  { id:'uc01',  area:'uc',   name:'UC - Enhancements to Existing Services (Collab)',         owner:'',dept:'Response & Reliability',  clarityId:'PR000680',priority:'Medium',  objective:'Deliver enhancements to UC services — Teams/SharePoint provisioning, faxing platform, GenAI use cases, virtual conference platform',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'uc02',  area:'uc',   name:'UC - Enhancements to Existing Services (Voice)',          owner:'',dept:'Response & Reliability',  clarityId:'PR000680',priority:'Medium',  objective:'Deliver voice enhancements — migrate AT&T ERS to TAO platform, migrate Avaya AEC to Avaya Infinity',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'uc03',  area:'uc',   name:'UC - Maintenance & Support of UC Services',               owner:'',dept:'Operations',              clarityId:'PR000681',priority:'Critical', objective:'Respond to business impacting incidents, maintain SLA/SLOs, support 16 new stores and 9 new non-store sites in FY26',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'uc04',  area:'uc',   name:'UC - PCI Compliance & Audit/Vulnerability Mgmt',         owner:'',dept:'Operations',              clarityId:'PR000681',priority:'Critical', objective:'Design, implement and maintain infrastructure to meet PCI/SOX requirements — 92% CyberSecurity SLA adherence target',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'uc05',  area:'uc',   name:'UC - Support Matrix Project Efforts',                     owner:'',dept:'Response & Reliability',  clarityId:'PR000680',priority:'High',    objective:'Provide UC expertise: hdPhone 200-store pilot, Microsoft agreement renewal, OmniPay Cisco integration, Call Branding',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'uc06',  area:'uc',   name:'UC - Telecom Planning, Auditing & Provisioning',          owner:'',dept:'Operations',              clarityId:'PR000681',priority:'High',    objective:'Disconnect 300 analog POTs lines, reduce mobility spend 5% ($600K), new re-bill strategy for 1,340 legacy lines',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'uc07',  area:'uc',   name:'UC Refresh (Collaboration)',                              owner:'',dept:'Refresh',                 clarityId:'PR000682',priority:'Medium',  objective:'Refresh 70 expired video conference endpoints, decommission Exchange Web Services, enable MTR on 88 endpoints',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'uc08',  area:'uc',   name:'UC Refresh (Voice)',                                      owner:'',dept:'Refresh',                 clarityId:'PR000682',priority:'High',    objective:'Migrate all 2200 stores to vendor\'s cloud telephony, replace Readyline TFNs — migrate 1,674 lines (75%) to new solution',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  // Network Automation & Traffic Management
+  { id:'na01',  area:'natm', name:'NATM - FY26 Load Balancer Refresh',                      owner:'',dept:'Refresh',                 clarityId:'PR000469',priority:'Critical', objective:'Install F5 hardware and migrate 40,000+ VIPs from Citrix. Refactor LB Portal to Galaxy Platform',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'na02',  area:'natm', name:'NATM - FY26 Network Experience (Automation)',             owner:'',dept:'Response & Reliability',  clarityId:'PR000469',priority:'Critical', objective:'Modernize automation platform for device management — refactor Netbox inventory, migrate AAP to GCP, improve automation adoption',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'na03',  area:'natm', name:'NATM - FY26 Network Experience (Traffic Mgmt)',          owner:'',dept:'Response & Reliability',  clarityId:'PR000469',priority:'Critical', objective:'Refactor portals for consistent experience — reduce network portals from 7 to 5, migrate VSM to Galaxy, consolidate NE into AXON',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'na04',  area:'natm', name:'NATM - FY26 Platform & Operations',                      owner:'',dept:'Operations',              clarityId:'PR000469',priority:'Critical', objective:'Maintain load balancing and proxy infrastructure. Meet SLOs: 99.99% availability, <50ms latency. L1/L2/L3 on-call support',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'na05',  area:'natm', name:'NATM - FY26 Priority 0 Unplanned Business Requests',     owner:'',dept:'Operations',              clarityId:'PR000469',priority:'High',    objective:'Planned budget for urgent, unplanned requests impacting Store and Non-Store Network teams',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'na06',  area:'natm', name:'NATM - FY26 Vantage Edge Refresh',                       owner:'',dept:'Refresh',                 clarityId:'PR000469',priority:'Critical', objective:'Replatform Vantage Edge into GCP — vendor shutting down June 2026. Migrate 100% of traffic from Metal to GCP',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+  { id:'na07',  area:'natm', name:'NATM - PCF Migration',                                   owner:'',dept:'TLM',                     clarityId:'PR001132',priority:'Critical', objective:'Develop features enabling teams to retire PCF legacy systems. Enable new API/UI features, provide 24/7 pager monitoring',status:'on-track',pct:0,start:'',end:'',budget:'green',scope:'green',note:'' },
+];
+
+// ─── Sample updates (seeded on first load) ───────────────────────────────────
+const SEED_UPDATES = {
+  'dn07': [{
+    id:'upd_dn07_1', savedAt:'2026-05-19T10:00:00', weekOf:'2026-05-19', pm:'Annette Groves',
+    statusSnap:'on-track', confidence:'medium',
+    summary:'On pace for June 27 completion at 87% (612/700 stores). Expedited shipping decision needed this week to protect California schedule.',
+    progressCurrent:'612', progressTotal:'700', progressUnit:'stores',
+    accomp:`Completed Starlink installations at 47 stores this week (cumulative: 612 of 700)
+  Sites completed include TX-Houston cluster (12 stores) and GA-Atlanta cluster (8 stores)
+  Vendor throughput increased to ~55 installs/week following crew ramp-up
+  Resolved permitting delays at 3 California locations`,
+    upcoming:`Complete remaining 88 stores across FL, CA, and PNW regions by Jun 27
+  Begin post-install performance validation testing week of May 26
+  Finalize decommission plan for legacy WAN circuits at completed sites`,
+    risks:`California permitting process averaging 3 weeks — 14 stores at risk of missing June target
+  Vendor has flagged potential equipment shortage for Q-band units (3–4 week lead time)`,
+    decisions:`Approve $42K expedited shipping for CA equipment to maintain schedule (Annette Groves)
+  Store ops team requesting 48-hr blackout window approval for 6 high-volume stores (Store Ops / Annette Groves)`,
+    issues:''
+  }],
+  'na01': [{
+    id:'upd_na01_1', savedAt:'2026-05-19T10:00:00', weekOf:'2026-05-19', pm:'Kyla Stevenson',
+    statusSnap:'on-track', confidence:'medium',
+    summary:'VIP migration on track for July 31 Citrix deadline. 2 app teams blocking production wave 1 — UAT extension request requires decision.',
+    progressCurrent:'4200', progressTotal:'14000', progressUnit:'VIPs migrated',
+    accomp:`F5 hardware delivered and racked in ATL-DC1 and SEA-DC2 data centers
+  Completed migration of 4,200 VIPs in test environment — zero issues
+  LB Portal v2.1 deployed to staging; UAT sign-off received from App Platform team
+  Citrix decommission scripts tested and validated in lower environments`,
+    upcoming:`Begin production VIP migration wave 1 (8,000 VIPs) week of May 26
+  Complete F5 hardware install in remaining 3 data centers by June 6
+  LB Portal Galaxy migration go-live targeted for June 13`,
+    risks:`Citrix contract expires July 31 — migration pace must average 2,800 VIPs/week to meet deadline
+  2 application teams have not completed UAT; escalation in progress`,
+    decisions:`Approve or deny App Platform 2-week UAT extension on legacy payment routing VIPs (Kyla Stevenson)
+  Acknowledge scope change: firewall audit added ~1 week to overall schedule (Kyla Stevenson)`,
+    issues:''
+  }],
+  'dc04': [{
+    id:'upd_dc04_1', savedAt:'2026-05-19T10:00:00', weekOf:'2026-05-19', pm:'Shannon McDougal',
+    statusSnap:'at-risk', confidence:'high',
+    summary:'DNS automation live — provisioning time cut from 4 days to 2 hours. DHCP module on track for May 30 despite resource constraint.',
+    progressCurrent:'18', progressTotal:'30', progressUnit:'teams onboarded',
+    accomp:`DDI automation engine deployed to production for IPAM request workflows
+  Reduced DNS provisioning time from 4 days to under 2 hours for standard requests
+  Onboarded 3 new application teams to self-service portal (18 total)`,
+    upcoming:`Complete DHCP automation module development by May 30
+  Schedule onboarding workshops for remaining 12 application teams in June
+  Begin integration testing with Infoblox upgrade scheduled for June 9`,
+    risks:`Infoblox upgrade dependency — if delayed, DHCP automation milestone slips by 3 weeks
+  Resource constraint: lead engineer on PTO May 26–Jun 2`,
+    decisions:'', issues:''
+  }],
+  'uc08': [{
+    id:'upd_uc08_1', savedAt:'2026-05-19T10:00:00', weekOf:'2026-05-19', pm:'Joey Agee',
+    statusSnap:'on-track', confidence:'medium',
+    summary:'1,423 of 2,200 stores (65%) migrated. Avaya Infinity cutover June 3 is next major milestone — pacing needs to accelerate to 350 stores/week.',
+    progressCurrent:'1423', progressTotal:'2200', progressUnit:'stores migrated',
+    accomp:`Migrated 287 stores to cloud telephony this week (cumulative: 1,423 of 2,200)
+  Completed pilot validation at 15 high-volume stores — call quality scores averaging 4.6/5.0
+  Readyline TFN migration: 890 of 1,674 lines (53%) moved to new solution`,
+    upcoming:`Accelerate migration cadence to 350 stores/week starting May 26 with additional project team
+  Begin Avaya Infinity cutover for corporate contact center — June 3 target
+  Complete Readyline TFN migration by June 20`,
+    risks:`Store manager training completion rate at 71% — targeting 90% before June wave begins
+  AT&T provisioning SLA slipping in Southeast region; backup carrier being evaluated`,
+    decisions:`Approve activation of backup carrier for AT&T Southeast region to protect June wave (Joey Agee)
+  Finance review needed: $18K vendor billing dispute on 342 migrated lines (Finance / Joey Agee)`,
+    issues:''
+  }],
+  'dn17': [{
+    id:'upd_dn17_1', savedAt:'2026-05-19T10:00:00', weekOf:'2026-05-19', pm:'Annette Groves',
+    statusSnap:'on-track', confidence:'high',
+    summary:'47% complete (42/89 locations). Compliance evidence package due May 28. Phoenix WMS exception awaiting Cyber Security approval.',
+    progressCurrent:'42', progressTotal:'89', progressUnit:'locations complete',
+    accomp:`Network segmentation deployed at 8 additional supply chain locations (42 of 89 complete)
+  Micro-segmentation policies validated in test — zero business disruption reported
+  Cyber Security finding FND-7128 remediated at all completed sites`,
+    upcoming:`Complete remaining 47 locations by July 31 per Cyber Security SLA commitment
+  Week of May 26: focusing on 6 Southeast distribution centers
+  Submit interim compliance evidence package to Cyber team by May 28`,
+    risks:`Two locations require physical infrastructure upgrades before segmentation can proceed — 3-week delay
+  Legacy WMS application at DC-Phoenix requires exception approval for segmentation policy`,
+    decisions:`Phoenix WMS exception request pending Cyber Security approval — SLA expires May 28 (Cyber Security / Annette Groves)`,
+    issues:''
+  }],
+  'na06': [{
+    id:'upd_na06_1', savedAt:'2026-05-19T10:00:00', weekOf:'2026-05-19', pm:'Kyla Stevenson',
+    statusSnap:'at-risk', confidence:'low',
+    summary:'Hard June 30 vendor shutdown with 35% traffic migrated. $47K/month GCP cost overrun requires VP approval — no extension available.',
+    progressCurrent:'35', progressTotal:'100', progressUnit:'% traffic to GCP',
+    accomp:`GCP infrastructure provisioning complete — all regions active
+  35% of traffic successfully migrated from Metal to GCP with no latency degradation
+  Vantage Edge vendor confirmed June 30 shutdown deadline (no extension available)`,
+    upcoming:`Migrate remaining 65% of traffic by June 20 to allow 10-day buffer before vendor shutdown
+  Complete DNS cutover for all 14 edge endpoints by June 6
+  Run parallel operation validation through June 13`,
+    risks:`June 30 hard deadline with no extension — any delay in traffic migration is critical path
+  GCP cost overrun projected at +$47K/month vs plan due to higher-than-expected egress traffic`,
+    decisions:`VP approval required for $47K/month GCP cost overrun to unblock migration completion (VP Engineering / Kyla Stevenson)`,
+    issues:''
+  }],
+};
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let db         = load();
+let areaFilter = 'all';
+let statFilter = null;
+let selectedId = null;
+let editId     = null;
+let editArea   = null;
+let currentView = 'portfolio'; // 'home' | 'portfolio'
+let searchQuery = '';
+let pmFilter = null;
+
+function load() {
+  try {
+    const s = localStorage.getItem(KEY);
+    if (s) {
+      const d = JSON.parse(s);
+      // migrate: remove ET projects, fill owner from AREA_PM if blank
+      const validAreas = new Set(AREAS.map(a => a.id));
+      d.projects = d.projects
+        .filter(p => validAreas.has(p.area))
+        .map(p => ({...p, owner: p.owner || AREA_PM[p.area] || ''}));
+      // seed sample updates if none exist
+      if (!d.updates || !Object.keys(d.updates).length) d.updates = SEED_UPDATES;
+      d.resolvedDecisions = d.resolvedDecisions || {};
+      return d;
+    }
+  } catch {}
+  // Fresh load: apply sample status overrides and seed updates
+  const projects = SEED_PROJECTS.map(p => {
+    const overrides = { na06:'at-risk', dc04:'at-risk', dn17:'on-track', uc04:'at-risk' };
+    return {...p, owner: AREA_PM[p.area]||'', status: overrides[p.id]||p.status };
+  });
+  return { projects, updates: SEED_UPDATES, updated: new Date().toISOString(), resolvedDecisions: {} };
+}
+function persist() {
+  db.updated = new Date().toISOString();
+  localStorage.setItem(KEY, JSON.stringify(db));
+  renderChip();
+}
+function renderChip() {
+  const d = new Date(db.updated);
+  document.getElementById('updChip').textContent = 'Updated ' + d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + ' ' + d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function renderAll() {
+  const ovr = document.getElementById('overviewRow');
+  if (currentView === 'portfolio') {
+    if (ovr) ovr.style.display = 'none';
+    renderPortfolio(); renderSidebarCounts(); renderChip();
+  } else {
+    if (ovr) ovr.style.display = '';
+    renderOverview(); renderAreas(); renderSidebarCounts(); renderChip();
+  }
+}
+
+function getFiltered(aId) {
+  let p = db.projects.filter(x => x.area === aId);
+  if (statFilter) p = p.filter(x => x.status === statFilter);
+  return p;
+}
+
+// ── Overview KPI grid ────────────────────────────────────────────────────
+function renderOverview() {
+  const p = areaFilter === 'all'
+    ? db.projects
+    : db.projects.filter(x => x.area === areaFilter);
+  const c = {'on-track':0,'at-risk':0,'off-track':0,'complete':0,'on-hold':0};
+  p.forEach(x => c[x.status] = (c[x.status]||0) + 1);
+  const active = p.filter(x => x.status !== 'complete' && x.status !== 'on-hold').length;
+
+  const stats = [
+    { lbl:'Total Projects', val:p.length,        sub:active+' active',      dot:'' },
+    { lbl:'On Track',       val:c['on-track'],   sub:pct(c['on-track'],p.length)+'%',  dot:'#12B76A' },
+    { lbl:'At Risk',        val:c['at-risk'],    sub:pct(c['at-risk'],p.length)+'%',   dot:'#F79009' },
+    { lbl:'Off Track',      val:c['off-track'],  sub:pct(c['off-track'],p.length)+'%', dot:'#F04438' },
+    { lbl:'Complete',       val:c['complete'],   sub:pct(c['complete'],p.length)+'%',  dot:'#2E90FA' },
+    { lbl:'On Hold',        val:c['on-hold'],    sub:pct(c['on-hold'],p.length)+'%',   dot:'#9E77ED' },
+  ];
+
+  document.getElementById('overviewRow').innerHTML =
+    `<div class="kpi-grid">${stats.map(s =>
+      `<div class="kpi">
+        <div class="kpi-label">${s.dot?`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${s.dot};margin-right:5px;vertical-align:middle;opacity:.7"></span>`:''}${s.lbl}</div>
+        <div class="kpi-val" style="color:var(--g900)">${s.val}</div>
+        <div class="kpi-sub">${s.sub}</div>
+      </div>`).join('')}</div>`;
+}
+function pct(n, total) { return total ? Math.round(n/total*100) : 0; }
+
+function buildDonut(segments, total) {
+  if (!total) return '<svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="28" fill="none" stroke="#E4E7EC" stroke-width="10"/></svg>';
+  const R=28, C=2*Math.PI*R, cx=40, cy=40;
+  let offset = 0;
+  const paths = segments.map(s => {
+    const len = (s.val/total)*C;
+    if (!len) return '';
+    const p = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${s.col}" stroke-width="10" stroke-dasharray="${len} ${C}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    offset += len;
+    return p;
+  }).join('');
+  return `<svg viewBox="0 0 80 80"><circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#E4E7EC" stroke-width="10"/>${paths}</svg>`;
+}
+
+// ── Grid with filter bar ──────────────────────────────────────────────────
+function renderAreas() {
+  const allPill = `<button class="dr-btn${areaFilter==='all'?' active':''}" onclick="setArea('all',this)">All Product Areas</button>`;
+  const btns = allPill + AREAS.map(a =>
+    `<button class="dr-btn${areaFilter===a.id?' active':''}" onclick="setArea('${a.id}',this)">${a.label}</button>`
+  ).join('');
+
+  let projs = areaFilter === 'all' ? db.projects : db.projects.filter(p => p.area === areaFilter);
+  if (statFilter) projs = projs.filter(p => p.status === statFilter);
+  if (pmFilter) projs = projs.filter(p => p.owner === pmFilter);
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    projs = projs.filter(p =>
+      (p.name||'').toLowerCase().includes(q) ||
+      (p.owner||'').toLowerCase().includes(q) ||
+      (p.objective||'').toLowerCase().includes(q)
+    );
+  }
+  const PRIO_ORDER = {'Critical':0,'High':1,'Medium':2};
+  projs = projs.slice().sort((a,b) => (PRIO_ORDER[a.priority]??3) - (PRIO_ORDER[b.priority]??3));
+
+  const areaLabel = areaFilter === 'all' ? 'All Areas' : (AREAS.find(a=>a.id===areaFilter)?.label || '');
+  const secTitle = searchQuery
+    ? `${projs.length} result${projs.length!==1?'s':''} for "${esc(searchQuery)}"`
+    : statFilter
+      ? `${SC[statFilter]?.label || ''} — ${projs.length} project${projs.length!==1?'s':''}`
+      : `${areaLabel} — ${projs.length} initiative${projs.length!==1?'s':''}`;
+
+  const cards = projs.length
+    ? projs.map(p => projCard(p)).join('')
+    : `<div style="grid-column:1/-1;padding:32px;text-align:center;font-size:13px;color:var(--g400)">No projects${searchQuery?' matching "'+esc(searchQuery)+'"':statFilter?' matching this filter':''} found.</div>`;
+
+  const pms = [...new Set(db.projects.map(p=>p.owner||'').filter(Boolean))].sort();
+  const pmPillsHtml = pms.length > 1 ? `
+    <div class="filter-bar" style="margin-bottom:10px">
+      <span class="filter-lbl">PM</span>
+      <button class="dr-btn${!pmFilter?' active':''}" onclick="setPmFilter(null,this)">All PMs</button>
+      ${pms.map(pm=>`<button class="dr-btn${pmFilter===pm?' active':''}" onclick="setPmFilter(${JSON.stringify(pm)},this)">${esc(pm)}</button>`).join('')}
+    </div>` : '';
+
+  document.getElementById('areas').innerHTML = `
+    ${pmPillsHtml}
+    <div class="filter-bar">
+      <span class="filter-lbl">Product Area</span>
+      ${btns}
+    </div>
+    <div class="sec-head">
+      <span class="sec-title">${secTitle}</span>
+    </div>
+    <div class="cards-wrap">${cards}</div>`;
+}
+
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+// ── Portfolio view ────────────────────────────────────────────────────────────
+function showPortfolio(btn) {
+  currentView = 'portfolio';
+  document.getElementById('overviewRow').style.display = 'none';
+  document.querySelectorAll('.ls-item').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderPortfolio();
+}
+
+function pfStat(label, value, sub, accent) {
+  return `<div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:14px 18px;box-shadow:0 1px 2px rgba(16,24,40,.05)">
+    <div style="font-size:11px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">${label}</div>
+    <div style="font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1;color:${accent};margin-bottom:3px">${value}</div>
+    ${sub ? `<div style="font-size:11px;color:var(--g400)">${sub}</div>` : ''}
+  </div>`;
+}
+
+function renderPortfolio() {
+  const projs = db.projects;
+  const stc = {'on-track':0,'at-risk':0,'off-track':0,'complete':0,'on-hold':0};
+  projs.forEach(p => stc[p.status] = (stc[p.status]||0)+1);
+
+  // Gather all open decisions from latest update per project
+  const allDecisions = [];
+  projs.forEach(p => {
+    const latest = ((db.updates||{})[p.id]||[])[0];
+    if (latest?.items?.decisions) {
+      latest.items.decisions.filter(d => d.text?.trim()).forEach(d => {
+        allDecisions.push({ projName:p.name, projId:p.id, text:d.text, person:d.person, area:p.area });
+      });
+    }
+  });
+
+  // ── Stat strip
+  const statStrip = `
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:26px">
+      ${pfStat('Total Initiatives', projs.length, projs.filter(p=>p.status!=='complete'&&p.status!=='on-hold').length+' active', '#101828')}
+      ${pfStat('On Track',   stc['on-track'],  pct(stc['on-track'], projs.length)+'% of portfolio', '#12B76A')}
+      ${pfStat('At Risk',    stc['at-risk'],   pct(stc['at-risk'],  projs.length)+'% of portfolio', '#F79009')}
+      ${pfStat('Off Track',  stc['off-track'], pct(stc['off-track'],projs.length)+'% of portfolio', '#F04438')}
+      ${pfStat('Open Decisions', allDecisions.length, 'pending leadership action', '#175CD3')}
+    </div>`;
+
+  // ── Area health cards
+  const areaCards = AREAS.map(a => {
+    const ap = projs.filter(p => p.area===a.id);
+    const asc = {'on-track':0,'at-risk':0,'off-track':0,'complete':0,'on-hold':0};
+    ap.forEach(p => asc[p.status]=(asc[p.status]||0)+1);
+    const needsAttn = asc['at-risk']+asc['off-track'];
+    const tot = ap.length||1;
+    const barSegs = [
+      {c:'#12B76A', w:pct(asc['on-track'],tot),  s:'on-track'},
+      {c:'#F79009', w:pct(asc['at-risk'],tot),   s:'at-risk'},
+      {c:'#F04438', w:pct(asc['off-track'],tot), s:'off-track'},
+      {c:'#2E90FA', w:pct(asc['complete'],tot),  s:'complete'},
+      {c:'#9E77ED', w:pct(asc['on-hold'],tot),   s:'on-hold'},
+    ].filter(s=>s.w>0).map(s=>`<div title="${SC[s.s]?.label||s.s}: ${asc[s.s]}" onclick="setAreaAndStatus('${a.id}','${s.s}')" style="height:100%;width:${s.w}%;background:${s.c};cursor:pointer;transition:opacity .13s" onmouseenter="this.style.opacity='.75'" onmouseleave="this.style.opacity='1'"></div>`).join('');
+    return `
+      <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:16px 18px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#fff;background:var(--orange);padding:2px 9px;border-radius:20px;display:inline-block;margin-bottom:5px">${esc(a.label)}</div>
+            <div style="font-size:11.5px;color:var(--g500)">${esc(AREA_PM[a.id]||'—')}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:22px;font-weight:800;color:var(--g900);line-height:1">${ap.length}</div>
+            <div style="font-size:10.5px;color:var(--g400)">initiatives</div>
+          </div>
+        </div>
+        <div style="height:6px;background:var(--g100);border-radius:4px;overflow:hidden;margin-bottom:9px;display:flex">${barSegs}</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          ${asc['on-track'] ? `<span style="font-size:11px;color:#027A48;font-weight:600">${asc['on-track']} on track</span>` : ''}
+          ${needsAttn      ? `<span style="font-size:11px;color:#B42318;font-weight:600">⚠ ${needsAttn} need attention</span>` : ''}
+          ${asc['complete'] ? `<span style="font-size:11px;color:#175CD3;font-weight:600">${asc['complete']} complete</span>` : ''}
+          ${asc['on-hold']  ? `<span style="font-size:11px;color:#5925DC;font-weight:600">${asc['on-hold']} on hold</span>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  // ── Needs attention
+  const PRIO_ORDER = {'Critical':0,'High':1,'Medium':2};
+  const attnProjs = projs
+    .filter(p => ['at-risk','off-track'].includes(p.status))
+    .sort((a,b) => (PRIO_ORDER[a.priority]??3)-(PRIO_ORDER[b.priority]??3));
+
+  const attnHtml = attnProjs.length ? attnProjs.map(p => {
+    const sc2 = SC[p.status]||SC['on-track'];
+    const pc2 = PC[p.priority]||'';
+    const latest = ((db.updates||{})[p.id]||[])[0];
+    const note = latest?.summary||p.note||'';
+    return `
+      <div onclick="showLeadershipDetail('${p.id}')" class="pf-row-item">
+        <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;flex-wrap:wrap">
+          <span class="badge ${sc2.bc}">${sc2.label}</span>
+          ${pc2 ? `<span class="badge ${pc2}">${esc(p.priority)} Priority</span>` : ''}
+        </div>
+        <div style="font-size:12.5px;font-weight:600;color:var(--g900);margin-bottom:2px">${esc(p.name)}</div>
+        ${note ? `<div style="font-size:11.5px;color:var(--g500);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(note)}</div>` : ''}
+      </div>`;
+  }).join('')
+  : `<div style="padding:28px 0;text-align:center;font-size:12px;color:var(--g400)">✓ No projects currently need attention</div>`;
+
+  // ── Open decisions
+  const decisHtml = allDecisions.length ? allDecisions.map((d,i) => {
+    const sep = i < allDecisions.length-1 ? 'border-bottom:1px solid rgba(254,200,75,.25);' : '';
+    return `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:9px 0;${sep}">
+        <div style="display:flex;align-items:flex-start;gap:7px;min-width:0;flex:1">
+          <span style="color:#F79009;font-weight:700;flex-shrink:0;line-height:1.5">›</span>
+          <div style="min-width:0">
+            <div style="font-size:12px;color:var(--g800);line-height:1.5">${esc(d.text)}</div>
+            <div style="font-size:10.5px;color:var(--g400);margin-top:2px">${esc(d.projName)}</div>
+          </div>
+        </div>
+        ${d.person ? `<span style="font-size:11px;font-weight:600;color:#92400E;background:rgba(254,200,75,.28);padding:2px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0">${esc(d.person)}</span>` : ''}
+      </div>`;
+  }).join('')
+  : `<div style="padding:28px 0;text-align:center;font-size:12px;color:var(--g400)">No open decisions</div>`;
+
+  // ── Recent updates
+  const recentUpdates = [];
+  projs.forEach(p => {
+    const updArr = (db.updates||{})[p.id]||[];
+    if (updArr.length) recentUpdates.push({proj:p, upd:updArr[0]});
+  });
+  recentUpdates.sort((a,b) => (b.upd.weekOf||'').localeCompare(a.upd.weekOf||''));
+
+  const recentHtml = recentUpdates.slice(0,6).map((r,i) => {
+    const sc3 = SC[r.proj.status]||SC['on-track'];
+    const sep = i > 0 ? 'border-top:1px solid var(--g100);' : '';
+    return `
+      <div onclick="showLeadershipDetail('${r.proj.id}')" class="pf-row-item" style="${sep}">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <div style="width:8px;height:8px;border-radius:50%;background:${sc3.ringColor};flex-shrink:0;margin-top:4px"></div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:2px;flex-wrap:wrap">
+              <span style="font-size:12.5px;font-weight:600;color:var(--g900)">${esc(r.proj.name)}</span>
+              <span class="badge ${sc3.bc}" style="font-size:10.5px">${sc3.label}</span>
+            </div>
+            ${r.upd.summary ? `<div style="font-size:11.5px;color:var(--g500);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.upd.summary)}</div>` : ''}
+          </div>
+          <div style="font-size:10.5px;color:var(--g400);white-space:nowrap;flex-shrink:0;padding-top:2px">${fDateShort(r.upd.weekOf)}</div>
+        </div>
+      </div>`;
+  }).join('') || `<div style="padding:24px 0;text-align:center;font-size:12px;color:var(--g400)">No updates yet</div>`;
+
+  document.getElementById('areas').innerHTML = `
+    ${statStrip}
+    <div class="sec-head"><span class="sec-title">Portfolio Health</span></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px">${areaCards}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+      <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:18px 20px">
+        <div style="font-size:13px;font-weight:700;color:var(--g900);margin-bottom:2px">Needs Attention</div>
+        <div style="font-size:11.5px;color:var(--g400);margin-bottom:14px">${attnProjs.length} initiative${attnProjs.length!==1?'s':''} at risk or off track — click any to view detail</div>
+        ${attnHtml}
+      </div>
+      <div style="background:#FFFBF5;border:1px solid #FEC84B;border-radius:12px;padding:18px 20px">
+        <div style="font-size:13px;font-weight:700;color:var(--g900);margin-bottom:2px">Open Decisions</div>
+        <div style="font-size:11.5px;color:var(--g400);margin-bottom:14px">${allDecisions.length} decision${allDecisions.length!==1?'s':''} pending leadership action</div>
+        ${decisHtml}
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:18px 20px">
+      <div style="font-size:13px;font-weight:700;color:var(--g900);margin-bottom:2px">Recent Updates</div>
+      <div style="font-size:11.5px;color:var(--g400);margin-bottom:14px">Latest status updates across all initiatives — click any to view detail</div>
+      ${recentHtml}
+    </div>`;
+}
+const fDate = d => { if(!d) return '—'; return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
+const fDateShort = d => { if(!d) return ''; return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
+
+function buildRing(pct, color) {
+  const r=28, C=2*Math.PI*r, len=(pct/100)*C;
+  return `<svg viewBox="0 0 68 68" style="transform:rotate(-90deg)">
+    <circle cx="34" cy="34" r="${r}" fill="none" stroke="#E4E7EC" stroke-width="7"/>
+    <circle cx="34" cy="34" r="${r}" fill="none" stroke="${color}" stroke-width="7"
+      stroke-dasharray="${len} ${C}" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function projCard(p) {
+  const a = AREAS.find(x => x.id === p.area) || AREAS[0];
+  const sc = SC[p.status] || SC['on-track'];
+  const updArr = (db.updates||{})[p.id] || [];
+  const latest = updArr[0] || null;
+  const isSel = selectedId === p.id;
+  const pc = PC[p.priority] || '';
+
+  const cardUpdArr = (db.updates||{})[p.id]||[];
+  const cardLatest = cardUpdArr[0]||null;
+  const daysSince = cardLatest?.weekOf
+    ? Math.floor((Date.now()-new Date(cardLatest.weekOf+'T12:00:00').getTime())/86400000)
+    : 999;
+  const isStale = daysSince > 14;
+  const hasMilestone = p.milestoneLabel && p.milestoneDate;
+
+  const weekLabel = latest && latest.weekOf
+    ? 'Week of ' + fDateShort(latest.weekOf)
+    : '';
+
+
+  return `
+  <div class="proj-card${isSel?' selected':''}" id="card-${p.id}"
+       onclick="selectProj('${p.id}')">
+    <div class="card-body">
+      <div class="card-row1">
+        <div class="card-badges">
+          <span class="badge ${sc.bc}">${sc.label}</span>
+          ${pc ? `<span class="badge ${pc}">${esc(p.priority)} Priority</span>` : ''}
+        </div>
+      </div>
+      <div class="card-area" style="margin-bottom:8px">
+        <span class="card-area-dot" style="background:${a.color}"></span>
+        <span class="card-area-lbl">${esc(a.label)}</span>
+      </div>
+      <div class="card-name">${esc(p.name)}</div>
+      <div class="card-owner">${esc(p.owner || '—')}</div>
+      ${p.objective ? `<div class="card-desc">${esc(p.objective)}</div>` : '<div style="flex:1"></div>'}
+      ${hasMilestone ? `<div style="padding-top:6px"><span class="ms-chip">📅 ${esc(p.milestoneLabel)} · ${fDateShort(p.milestoneDate)}</span></div>` : ''}
+      ${isStale ? `<div style="padding-top:8px"><span class="stale-badge">No update in ${daysSince > 999 ? '—' : daysSince+'d'}</span></div>` : ''}
+    </div>
+  </div>`;
+}
+
+// ─── Sidebar counts ───────────────────────────────────────────────────────────
+function renderSidebarCounts() {
+  const scAll=document.getElementById('sc-all'); if(scAll) scAll.textContent=db.projects.length;
+  AREAS.forEach(a => { const el=document.getElementById('sc-'+a.id); if(el) el.textContent=db.projects.filter(p=>p.area===a.id).length; });
+  ['on-track','at-risk','off-track','complete','on-hold'].forEach(s => { const el=document.getElementById('ss-'+s); if(el) el.textContent=db.projects.filter(p=>p.status===s).length; });
+  const fc = document.getElementById('footerCount'); if(fc) fc.textContent = db.projects.length + ' project' + (db.projects.length!==1?'s':'') + ' tracked';
+}
+
+// ─── Select / right panel ─────────────────────────────────────────────────────
+function selectProj(id) {
+  selectedId = id;
+  renderAreas();
+  showLeadershipDetail(id);
+}
+
+
+// ─── Filters ─────────────────────────────────────────────────────────────────
+function setArea(id, btn) {
+  currentView = 'home';
+  areaFilter = id; statFilter = null; searchQuery = ''; pmFilter = null;
+  const inp = document.getElementById('srchInput'); if(inp) inp.value='';
+  const clr = document.getElementById('srchClear'); if(clr) clr.style.display='none';
+  document.getElementById('overviewRow').style.display = '';
+  document.querySelectorAll('.ls-item').forEach(b => b.classList.remove('active'));
+  const si = document.querySelector(`.ls-item[data-area="${id}"]`);
+  if (si) si.classList.add('active');
+  renderOverview();
+  renderAreas();
+}
+
+function openContracts() {
+  document.querySelectorAll('.ls-item').forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('overviewRow').style.display = 'none';
+  document.getElementById('areas').innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:14px;text-align:center">
+      <div style="width:56px;height:56px;border-radius:50%;background:#EFF8FF;display:flex;align-items:center;justify-content:center">
+        <svg width="26" height="26" fill="none" stroke="#2E90FA" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </div>
+      <div style="font-size:18px;font-weight:700;color:var(--g900)">Contract Renewals</div>
+      <div style="font-size:13px;color:var(--g500);max-width:340px;line-height:1.6">Track upcoming contract renewals, vendor agreements, and SLA expiration dates across all product areas in one place.</div>
+      <div style="font-size:11px;font-weight:600;color:#175CD3;background:#EFF8FF;padding:5px 14px;border-radius:20px;border:1px solid #B2DDFF">Coming Soon</div>
+    </div>`;
+}
+
+function openClaire() {
+  document.querySelectorAll('.ls-item').forEach(b => b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  // Claire page coming soon — placeholder
+  document.getElementById('areas').innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:14px;text-align:center">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--orange-pale);display:flex;align-items:center;justify-content:center">
+        <svg width="26" height="26" fill="none" stroke="var(--orange)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+      </div>
+      <div style="font-size:18px;font-weight:700;color:var(--g900)">Chat with Claire</div>
+      <div style="font-size:13px;color:var(--g500);max-width:320px;line-height:1.6">Your AI delivery assistant is coming soon. Claire will help you generate status summaries, flag risks, and surface insights from your weekly updates.</div>
+      <div style="font-size:11px;font-weight:600;color:var(--orange);background:var(--orange-pale);padding:5px 14px;border-radius:20px;border:1px solid var(--orange-rim)">Coming Soon</div>
+    </div>`;
+  document.getElementById('overviewRow').innerHTML = '';
+}
+function setStatus(s, btn) {
+  statFilter = statFilter === s ? null : s; areaFilter = 'all';
+  document.querySelectorAll('.ls-item').forEach(b => b.classList.remove('active'));
+  if (statFilter) btn.classList.add('active');
+  else document.querySelector('.ls-item[data-area="all"]').classList.add('active');
+  renderOverview();
+  renderAreas();
+}
+
+function setSearch(q) {
+  searchQuery = q;
+  const clr = document.getElementById('srchClear');
+  if (clr) clr.style.display = q ? '' : 'none';
+  if (currentView === 'portfolio') { currentView = 'home'; document.getElementById('overviewRow').style.display = ''; document.querySelectorAll('.ls-item').forEach(b=>b.classList.remove('active')); document.querySelector('.ls-item[data-area="all"]')?.classList.add('active'); }
+  renderOverview(); renderAreas();
+}
+function clearSearch() {
+  searchQuery = '';
+  const inp = document.getElementById('srchInput');
+  if (inp) inp.value = '';
+  const clr = document.getElementById('srchClear');
+  if (clr) clr.style.display = 'none';
+  renderOverview(); renderAreas();
+}
+function setPmFilter(pm, btn) {
+  pmFilter = pm;
+  renderOverview(); renderAreas();
+}
+function setAreaAndStatus(aId, status) {
+  currentView = 'home';
+  areaFilter = aId; statFilter = status; searchQuery = ''; pmFilter = null;
+  document.getElementById('overviewRow').style.display = '';
+  document.querySelectorAll('.ls-item').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`.ls-item[data-area="${aId}"]`)?.classList.add('active');
+  renderOverview(); renderAreas();
+}
+
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
+function openModal(id, aId) {
+  editId = id; editArea = aId || null;
+  document.getElementById('mttl').textContent = id ? 'Edit Project' : 'Add Project';
+  const p = id ? db.projects.find(x => x.id === id) : null;
+  document.getElementById('fn').value   = p?.name    || '';
+  document.getElementById('fo').value   = p?.owner   || '';
+  document.getElementById('fa').value   = p?.area    || aId || 'dn';
+  document.getElementById('fd').value   = p?.dept    || '';
+  document.getElementById('fcl').value  = p?.clarityId || '';
+  document.getElementById('fpr').value  = p?.priority  || 'High';
+  document.getElementById('fs').value   = p?.status  || 'on-track';
+  document.getElementById('fp').value   = p?.pct     ?? '';
+  document.getElementById('fsd').value  = p?.start   || '';
+  document.getElementById('fed').value  = p?.end     || '';
+  document.getElementById('fb').value   = p?.budget  || 'green';
+  document.getElementById('fsc').value  = p?.scope   || 'green';
+  document.getElementById('fobj').value = p?.objective|| '';
+  document.getElementById('fnote').value= p?.note    || '';
+  document.getElementById('frisks').value=p?.risks   || '';
+  document.getElementById('fnext').value= p?.next    || '';
+  hiRag('b', p?.budget||'green'); hiRag('s', p?.scope||'green');
+  document.getElementById('overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('fn').focus(), 40);
+}
+function closeModal() { document.getElementById('overlay').style.display='none'; editId=null; editArea=null; }
+function saveProject() {
+  const name = document.getElementById('fn').value.trim();
+  if (!name) { toast('Project name required'); document.getElementById('fn').focus(); return; }
+  const obj = {
+    id: editId || 'p'+Date.now(),
+    name,
+    owner:     document.getElementById('fo').value.trim(),
+    area:      document.getElementById('fa').value,
+    dept:      document.getElementById('fd').value.trim(),
+    clarityId: document.getElementById('fcl').value.trim(),
+    priority:  document.getElementById('fpr').value,
+    status:    document.getElementById('fs').value,
+    pct:       Math.min(100,Math.max(0,parseInt(document.getElementById('fp').value)||0)),
+    start:     document.getElementById('fsd').value,
+    end:       document.getElementById('fed').value,
+    budget:    document.getElementById('fb').value || 'green',
+    scope:     document.getElementById('fsc').value || 'green',
+    objective: document.getElementById('fobj').value.trim(),
+    note:      document.getElementById('fnote').value.trim(),
+    risks:     document.getElementById('frisks').value.trim(),
+    next:      document.getElementById('fnext').value.trim(),
+  };
+  if (editId) { const i=db.projects.findIndex(x=>x.id===editId); if(i>=0) db.projects[i]=obj; toast('Updated'); }
+  else { db.projects.push(obj); toast('Project added'); }
+  persist(); closeModal(); renderAll();
+}
+function delProj(id) {
+  if (!confirm('Delete this project?')) return;
+  db.projects = db.projects.filter(x => x.id !== id);
+  if (db.updates) delete db.updates[id];
+  if (selectedId === id) selectedId = null;
+  persist(); renderAll(); toast('Deleted');
+}
+function pickRag(f, v) { document.getElementById('f'+f).value=v; hiRag(f,v); }
+function hiRag(f, v) {
+  const m = {green:'sg',amber:'sa',red:'sr'};
+  document.querySelectorAll(`#${f}Opts .rag-opt`).forEach(b => { b.className='rag-opt'+(b.dataset.v===v?' '+m[v]:''); });
+}
+
+// ─── Import ───────────────────────────────────────────────────────────────────
+function importJSON(e) {
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try {
+      const d=JSON.parse(ev.target.result);
+      if(!Array.isArray(d.projects))throw 0;
+      db=d; persist(); renderAll(); toast('Imported '+d.projects.length+' projects');
+    } catch { toast('Import failed — invalid file'); }
+  };
+  r.readAsText(f); e.target.value='';
+}
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+let _tt;
+function toast(m) {
+  const e=document.getElementById('toast'); e.textContent=m; e.classList.add('on');
+  clearTimeout(_tt); _tt=setTimeout(()=>e.classList.remove('on'),2500);
+}
+
+// ─── Leadership Detail Modal ──────────────────────────────────────────────────
+function renderBullets(val) {
+  if (!val || !val.trim()) return '<span style="color:var(--g400);font-style:italic">Nothing entered</span>';
+  const items = val.split('\n').filter(l => l.trim()).map(l => {
+    const raw = l.trimEnd(), indent = raw.length - raw.trimStart().length;
+    const text = esc(raw.replace(/^[\s\-•*]+/, '').trim());
+    const cls = indent >= 4 ? 'sub2' : indent >= 2 ? 'sub' : '';
+    return `<li class="${cls}">${text}</li>`;
+  }).join('');
+  return `<ul class="bullet-list">${items}</ul>`;
+}
+
+function renderDecisionItems(val) {
+  if (!val || !val.trim()) return '';
+  const lines = val.split('\n').filter(l => l.trim());
+  return `<div>${lines.map((l, i) => {
+    const raw = l.replace(/^[\s\-•*]+/, '').trim();
+    const ownerMatch = raw.match(/\(([^)]+)\)$/);
+    const owner = ownerMatch ? ownerMatch[1] : null;
+    const text  = owner ? raw.slice(0, raw.lastIndexOf('(')).trim() : raw;
+    const sep   = i < lines.length - 1 ? 'border-bottom:1px solid rgba(254,200,75,.25);' : '';
+    return `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:8px 0;${sep}">
+      <div style="display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0">
+        <span style="color:#F79009;font-weight:700;flex-shrink:0;line-height:1.5">›</span>
+        <span style="font-size:12.5px;color:var(--g800);line-height:1.5">${esc(text)}</span>
+      </div>
+      ${owner ? `<span style="font-size:11px;font-weight:600;color:#92400E;background:rgba(254,200,75,.28);padding:2px 9px;border-radius:10px;white-space:nowrap;flex-shrink:0">${esc(owner)}</span>` : ''}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function strHash(s) { let h=5381; for(let i=0;i<s.length;i++) h=(h<<5)+h+s.charCodeAt(i)|0; return Math.abs(h).toString(36); }
+
+function toggleDecisionResolved(projId, textHash) {
+  if (!db.resolvedDecisions) db.resolvedDecisions = {};
+  const key = projId + '::' + textHash;
+  if (db.resolvedDecisions[key]) delete db.resolvedDecisions[key];
+  else db.resolvedDecisions[key] = true;
+  persist();
+  showLeadershipDetail(projId);
+}
+
+function renderDecisionItemsToggleable(val, projId) {
+  if (!val || !val.trim()) return '';
+  const lines = val.split('\n').filter(l => l.trim());
+  if (!lines.length) return '';
+  const resolved = db.resolvedDecisions || {};
+  return `<div>${lines.map((l, i) => {
+    const raw = l.replace(/^[\s\-•*]+/, '').trim();
+    const ownerMatch = raw.match(/\(([^)]+)\)$/);
+    const owner = ownerMatch ? ownerMatch[1] : null;
+    const text  = owner ? raw.slice(0, raw.lastIndexOf('(')).trim() : raw;
+    const hash  = strHash(raw);
+    const key   = projId + '::' + hash;
+    const isDone = !!resolved[key];
+    const sep   = i < lines.length - 1 ? 'border-bottom:1px solid rgba(254,200,75,.25);' : '';
+    return `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:8px 0;${sep}${isDone?'opacity:.5':''}">
+      <div style="display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0">
+        <span style="color:#F79009;font-weight:700;flex-shrink:0;line-height:1.5">›</span>
+        <span style="font-size:12.5px;color:var(--g800);line-height:1.5;${isDone?'text-decoration:line-through':''}">${esc(text)}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        ${owner ? `<span style="font-size:11px;font-weight:600;color:#92400E;background:rgba(254,200,75,.28);padding:2px 9px;border-radius:10px;white-space:nowrap">${esc(owner)}</span>` : ''}
+        <button onclick="toggleDecisionResolved('${projId}','${hash}')" title="${isDone?'Mark open':'Mark resolved'}" style="border:none;background:${isDone?'#ECFDF3':'var(--g100)'};color:${isDone?'#027A48':'var(--g500)'};border-radius:5px;padding:2px 7px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap">${isDone?'✓ Done':'Resolve'}</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function printLdModal(projId) {
+  const el = document.getElementById('ldModal');
+  if (!el) return;
+  const content = el.querySelector('.ld-modal')?.innerHTML || el.innerHTML;
+  const win = window.open('','_blank','width=800,height=900');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Project Brief</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Inter',sans-serif;color:#101828;padding:32px;font-size:13px;line-height:1.5;}
+    .ld-head{padding-bottom:16px;border-bottom:2px solid #E4E7EC;margin-bottom:18px;}
+    .ld-meta-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:10px;}
+    .ld-area-tag{font-size:10px;font-weight:700;color:#fff;background:#F96302;padding:2px 9px;border-radius:20px;}
+    .badge{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500;}
+    .badge::before{content:'';width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+    .bs-green{background:#ECFDF3;color:#027A48;}.bs-green::before{background:#12B76A;}
+    .bs-amber{background:#FFFAEB;color:#B54708;}.bs-amber::before{background:#F79009;}
+    .bs-red{background:#FEF3F2;color:#B42318;}.bs-red::before{background:#F04438;}
+    .bp-critical{background:#FEF3F2;color:#B42318;}.bp-critical::before{background:#F04438;}
+    .bp-high{background:#FFFAEB;color:#B54708;}.bp-high::before{background:#F79009;}
+    .bp-medium{background:#F8F9FC;color:#344054;}.bp-medium::before{background:#98A2B3;}
+    .ld-trend{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;}
+    .ld-trend-up{background:#ECFDF3;color:#027A48;}
+    .ld-trend-down{background:#FEF3F2;color:#B42318;}
+    .ld-trend-stable{background:#F8F9FC;color:#344054;}
+    .ld-proj-name{font-size:20px;font-weight:700;margin-bottom:4px;}
+    .ld-proj-sub{font-size:12px;color:#667085;margin-bottom:10px;}
+    .ld-objective{font-size:12px;color:#475467;padding-left:10px;border-left:2px solid #D0D5DD;margin-bottom:12px;}
+    .ld-exec-summary{font-size:12px;color:#344054;background:#F9FAFB;border-left:3px solid #D0D5DD;padding:10px 14px;border-radius:6px;margin-bottom:12px;}
+    .ld-progress-wrap{border:1px solid #E4E7EC;border-radius:8px;padding:12px 14px;margin-bottom:14px;}
+    .ld-progress-track{height:4px;background:#F2F4F7;border-radius:4px;overflow:hidden;margin:6px 0;}
+    .ld-progress-fill{height:100%;border-radius:4px;}
+    .ld-decisions{background:#FFFBF5;border:1px solid #FEC84B;border-radius:8px;padding:12px 14px;margin-bottom:16px;}
+    .ld-decisions-hdr{font-size:10px;font-weight:700;color:#B54708;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+    .ld-block{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #F2F4F7;}
+    .ld-block:last-child{border-bottom:none;}
+    .ld-sec-lbl{font-size:10px;font-weight:700;color:#101828;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+    .ld-watch .ld-sec-lbl{color:#B54708;}
+    .bullet-list{list-style:none;padding:0;margin:0;}
+    .bullet-list li{font-size:12px;color:#344054;padding-left:14px;position:relative;margin-bottom:2px;}
+    .bullet-list li::before{content:'•';position:absolute;left:2px;color:#98A2B3;}
+    .ld-foot,.ld-hist,.btn{display:none!important;}
+    @media print{body{padding:20px;}button{display:none!important;}}
+  </style></head><body>${content}</body></html>`);
+  win.document.close();
+  setTimeout(() => win.print(), 600);
+}
+
+function closeLdModal() {
+  const el = document.getElementById('ldModal');
+  if (el) el.innerHTML = '';
+  selectedId = null;
+  renderAreas();
+}
+
+function showLeadershipDetail(id) {
+  const p = db.projects.find(x => x.id === id); if (!p) return;
+  const a = AREAS.find(x => x.id === p.area) || AREAS[0];
+  const sc = SC[p.status] || SC['on-track'];
+  const pc = PC[p.priority] || '';
+  const updArr = (db.updates||{})[id] || [];
+  const latest = updArr[0] || null;
+  const history = updArr.slice(1, 6);
+
+  const ownerStr = p.owner ? esc(p.owner) : '—';
+  const weekStr  = latest && latest.weekOf ? 'Week of ' + fDateShort(latest.weekOf) : '';
+  const msStr = p.milestoneLabel && p.milestoneDate
+    ? '🎯 ' + esc(p.milestoneLabel) + ' · ' + fDateShort(p.milestoneDate)
+    : '';
+
+  // ── Status Trend ──────────────────────────────────────────────────────────
+  const STATUS_RANK = {'on-track':3,'complete':4,'at-risk':2,'off-track':1,'on-hold':2};
+  const curSnap  = latest ? (latest.statusSnap || p.status) : p.status;
+  const prevSnap = history.length ? (history[0].statusSnap || null) : null;
+  let trendHtml = '';
+  if (prevSnap) {
+    const curR  = STATUS_RANK[curSnap]  || 2;
+    const prevR = STATUS_RANK[prevSnap] || 2;
+    const prevLabel = SC[prevSnap]?.label || prevSnap;
+    if      (curR > prevR) trendHtml = `<span class="ld-trend ld-trend-up">↑ Improved from ${prevLabel}</span>`;
+    else if (curR < prevR) trendHtml = `<span class="ld-trend ld-trend-down">↓ Was ${prevLabel}</span>`;
+    else                   trendHtml = `<span class="ld-trend ld-trend-stable">→ Stable</span>`;
+  }
+
+  // ── Executive Summary ─────────────────────────────────────────────────────
+  let summaryHtml = '';
+  if (latest && latest.summary && latest.summary.trim()) {
+    summaryHtml = `<div class="ld-exec-summary">${esc(latest.summary)}</div>`;
+  }
+
+  // ── Progress Bar ──────────────────────────────────────────────────────────
+  let progressHtml = '';
+  if (latest && latest.progressCurrent && latest.progressTotal) {
+    const cur = parseFloat(latest.progressCurrent);
+    const tot = parseFloat(latest.progressTotal);
+    const pctVal = tot > 0 ? Math.round((cur / tot) * 100) : 0;
+    const unit = latest.progressUnit || 'complete';
+    const PROG_FILL = {'on-track':'#12B76A','complete':'#12B76A','at-risk':'#F79009','off-track':'#F04438','on-hold':'#98A2B3'};
+    const fillColor = PROG_FILL[p.status] || '#12B76A';
+    const targetStr = p.end ? 'Target: ' + fDateShort(p.end) : '';
+    progressHtml = `
+    <div class="ld-progress-wrap">
+      <div class="ld-progress-top">
+        <span class="ld-progress-nums">${cur.toLocaleString()} <span style="font-size:12px;font-weight:400;color:var(--g400)">/ ${tot.toLocaleString()} ${esc(unit)}</span></span>
+        <span class="ld-progress-pct">${pctVal}%</span>
+      </div>
+      <div class="ld-progress-track">
+        <div class="ld-progress-fill" style="width:${pctVal}%;background:${fillColor}"></div>
+      </div>
+      ${targetStr ? `<div class="ld-progress-sub">${targetStr}</div>` : ''}
+    </div>`;
+  }
+
+  // ── Needs Your Attention ──────────────────────────────────────────────────
+  let decisionsHtml = '';
+  if (latest && latest.decisions && latest.decisions.trim()) {
+    decisionsHtml = `
+    <div class="ld-decisions">
+      <div class="ld-decisions-hdr">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M8 1.5L1 13.5h14L8 1.5z" stroke="#B54708" stroke-width="1.5" stroke-linejoin="round"/><line x1="8" y1="6" x2="8" y2="9.5" stroke="#B54708" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.5" r=".8" fill="#B54708"/></svg>
+        Needs Your Attention
+      </div>
+      ${renderDecisionItemsToggleable(latest.decisions, id)}
+    </div>`;
+  }
+
+  // ── Body ──────────────────────────────────────────────────────────────────
+  let bodyHtml = '';
+  if (latest) {
+    bodyHtml += decisionsHtml;
+
+    bodyHtml += `
+    <div class="ld-block">
+      <div class="ld-sec-lbl">This Week</div>
+      ${renderBullets(latest.accomp)}
+    </div>`;
+
+    if (latest.upcoming && latest.upcoming.trim()) {
+      bodyHtml += `
+      <div class="ld-block">
+        <div class="ld-sec-lbl">Upcoming Work</div>
+        ${renderBullets(latest.upcoming)}
+      </div>`;
+    }
+
+    const watchRaw = [latest.risks, latest.issues].filter(v => v && v.trim()).join('\n');
+    if (watchRaw.trim()) {
+      bodyHtml += `
+      <div class="ld-block ld-watch">
+        <div class="ld-sec-lbl">
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M8 1.5L1 13.5h14L8 1.5z" stroke="#B54708" stroke-width="1.5" stroke-linejoin="round"/><line x1="8" y1="6" x2="8" y2="9.5" stroke="#B54708" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.5" r=".8" fill="#B54708"/></svg>
+          Watch Items
+        </div>
+        ${renderBullets(watchRaw)}
+      </div>`;
+    }
+  } else {
+    bodyHtml = `
+    <div class="ld-empty">
+      <div class="ld-empty-icon">📋</div>
+      <div class="ld-empty-txt">No weekly update has been entered for this project yet.</div>
+    </div>`;
+  }
+
+  // ── History accordion ─────────────────────────────────────────────────────
+  let histHtml = '';
+  if (history.length) {
+    histHtml = `<div class="ld-hist">
+      <div class="ld-hist-lbl">Previous Updates</div>
+      ${history.map((u, i) => {
+        const label = (u.weekOf ? 'Week of ' + fDateShort(u.weekOf) : 'Entry') + (u.pm ? ' · ' + esc(u.pm) : '');
+        const watchH = [u.risks, u.issues].filter(v => v && v.trim()).join('\n');
+        const hSecs = [
+          { label:'This Week',   val: u.accomp   },
+          { label:'Upcoming Work', val: u.upcoming  },
+          { label:'Watch Items', val: watchH      },
+        ].filter(s => s.val && s.val.trim()).map(s =>
+          `<div class="hist-sub-section"><div class="hist-sub-lbl">${s.label}</div>${renderBullets(s.val)}</div>`
+        ).join('');
+        return `
+        <div class="ld-hi">
+          <div class="ld-hi-head" onclick="ldToggleHist('ldhi${i}')">
+            <span>${label}</span>
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="ld-hi-body" id="ldhi${i}">${hSecs || '<span style="color:var(--g400);font-size:12px;font-style:italic">No content</span>'}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  // ── Full modal HTML ───────────────────────────────────────────────────────
+  const html = `
+  <div class="ld-overlay" id="ldOverlay" onclick="if(event.target===document.getElementById('ldOverlay'))closeLdModal()">
+    <div class="ld-modal">
+
+      <!-- Header -->
+      <div class="ld-head">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="ld-meta-row">
+            <span class="ld-area-tag" style="background:var(--orange)">${esc(a.label)}</span>
+            <span class="badge ${sc.bc}">${sc.label}</span>
+            ${trendHtml}
+            ${pc ? `<span class="badge ${pc}">${esc(p.priority)} Priority</span>` : ''}
+          </div>
+          <button onclick="closeLdModal()" style="width:28px;height:28px;border:none;border-radius:6px;background:var(--g100);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--g500);flex-shrink:0">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="ld-proj-name">${esc(p.name)}</div>
+        <div class="ld-proj-sub">
+          <span>${ownerStr}</span>
+          ${weekStr ? `<span style="color:var(--g300)">·</span><span>${weekStr}</span>` : ''}
+          ${msStr ? `<span style="color:var(--g300)">·</span><span style="color:#175CD3;font-weight:500">${msStr}</span>` : ''}
+        </div>
+        ${p.objective ? `<div class="ld-objective">${esc(p.objective)}</div>` : ''}
+        ${summaryHtml}
+        ${progressHtml}
+      </div>
+
+      <!-- Body -->
+      <div class="ld-body">
+        ${bodyHtml}
+        ${histHtml}
+      </div>
+
+      <!-- Footer -->
+      <div class="ld-foot" style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:11.5px;color:var(--g400)">${latest ? 'Last updated ' + fDateShort(latest.weekOf) : 'No updates yet'}</span>
+        <button class="btn btn-ghost" onclick="printLdModal('${p.id}')" style="font-size:11px;padding:4px 10px">
+          <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          Print
+        </button>
+      </div>
+
+    </div>
+  </div>`;
+
+  let container = document.getElementById('ldModal');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'ldModal';
+    document.body.appendChild(container);
+  }
+  container.innerHTML = html;
+}
+
+function ldToggleHist(elId) {
+  const el = document.getElementById(elId);
+  if (el) el.classList.toggle('open');
+}
+
+
+// ─── PM Update Modal ──────────────────────────────────────────────────────────
+let puState = null;
+
+function _uid() { return Date.now() + '' + Math.floor(Math.random() * 9999); }
+
+function openPMUpdate() {
+  puState = {
+    step: 1, method: 'paste',
+    projectId: '', weekOf: new Date().toISOString().slice(0,10),
+    rawNotes: '', parseSuccess: false,
+    summary: '',
+    // project metadata (pre-populated from selected project)
+    projectName: '', projectOwner: '', projectDept: '', projectClarityId: '',
+    projectStatus: '', projectPriority: '',
+    projectPct: '', projectStart: '', projectEnd: '',
+    projectBudget: 'green', projectScope: 'green',
+    projectObjective: '', projectNote: '',
+    progressCurrent: '', progressTotal: '', progressUnit: '',
+    milestoneLabel: '',
+    milestoneDate: '',
+    items: { accomp:[], upcoming:[], watch:[], decisions:[] },
+  };
+  _renderPU();
+}
+
+function closePMUpdate() {
+  const el = document.getElementById('puModal');
+  if (el) el.innerHTML = '';
+  puState = null;
+}
+
+function _renderPU() {
+  if (!puState) return;
+  const el = document.getElementById('puModal');
+  if (!el) return;
+  el.innerHTML = puState.step === 1 ? _puStep1Html() : _puStep2Html();
+}
+
+function _puCloseBtn() {
+  return `<button onclick="closePMUpdate()" style="width:28px;height:28px;border:none;border-radius:6px;background:var(--g100);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--g500);flex-shrink:0;">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+  </button>`;
+}
+
+function _puStep1Html() {
+  const opts = db.projects
+    .slice().sort((a,b) => a.name.localeCompare(b.name))
+    .map(p => {
+      const area = AREAS.find(x => x.id === p.area);
+      return `<option value="${esc(p.id)}" ${puState.projectId===p.id?'selected':''}>${esc(p.name)}${area?' — '+esc(area.label):''}</option>`;
+    }).join('');
+  const isPaste = puState.method === 'paste';
+
+  return `
+  <div class="pu-overlay" id="puOverlay" onclick="if(event.target===this)closePMUpdate()">
+    <div class="pu-modal">
+      <div class="pu-head">
+        <div><div class="pu-title">New PM Update</div><div class="pu-step-lbl">Step 1 of 2 — Choose project &amp; enter notes</div></div>
+        ${_puCloseBtn()}
+      </div>
+      <div class="pu-body">
+        <div style="margin-bottom:20px">
+          <div class="pu-field-lbl">Project</div>
+          <select class="pu-select" id="puProjSel" onchange="puState.projectId=this.value">
+            <option value="">— Select a project —</option>${opts}
+          </select>
+        </div>
+        <div class="pu-method-row">
+          <button class="pu-method-btn ${isPaste?'active':''}" onclick="puSetMethod('paste')">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="3" y="1.5" width="10" height="13" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M6 5.5h4M6 8h4M6 10.5h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            Paste Copilot Notes
+          </button>
+          <button class="pu-method-btn ${!isPaste?'active':''}" onclick="puSetMethod('manual')">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5a1.5 1.5 0 012.121 2.121L5.5 12.743 2 13.5l.757-3.5L11.5 2.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Enter Manually
+          </button>
+        </div>
+        ${isPaste ? `
+        <div>
+          <div class="pu-field-lbl">Copilot / Meeting Notes</div>
+          <textarea class="pu-textarea" id="puRawNotes" placeholder="Paste your Copilot meeting notes, Teams summary, or free-form status notes here…
+
+Our system will automatically:
+  • Identify completed work  →  This Week
+  • Pull upcoming milestones  →  Upcoming Work
+  • Surface risks &amp; blockers  →  Watch Items
+  • Extract owners and due dates
+
+You'll review and edit everything before it posts.">${esc(puState.rawNotes)}</textarea>
+          <div class="pu-parse-hint">Supports Copilot transcripts, Teams meeting summaries, or bullet-point notes.</div>
+        </div>` : `
+        <div style="height:8px"></div>`}
+      </div>
+      <div class="pu-foot">
+        <button class="btn btn-ghost" onclick="closePMUpdate()">Cancel</button>
+        <button class="btn btn-primary" id="puContBtn" onclick="puContinue()">${isPaste ? 'Extract &amp; Review →' : 'Continue →'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function puSetMethod(m) {
+  if (!puState) return;
+  // capture raw notes before re-render if switching away from paste
+  if (puState.method === 'paste') {
+    const ta = document.getElementById('puRawNotes');
+    if (ta) puState.rawNotes = ta.value;
+  }
+  puState.method = m;
+  _renderPU();
+  if (m === 'paste') setTimeout(() => { const ta = document.getElementById('puRawNotes'); if (ta) ta.focus(); }, 40);
+}
+
+function puContinue() {
+  if (!puState) return;
+  const sel = document.getElementById('puProjSel');
+  if (sel) puState.projectId = sel.value;
+  if (!puState.projectId) { toast('Please select a project first'); return; }
+  const selProj = db.projects.find(x => x.id === puState.projectId);
+  if (selProj) {
+    puState.projectName      = selProj.name       || '';
+    puState.projectOwner     = selProj.owner      || '';
+    puState.projectDept      = selProj.dept       || '';
+    puState.projectClarityId = selProj.clarityId  || '';
+    puState.projectStatus    = selProj.status     || 'on-track';
+    puState.projectPriority  = selProj.priority   || 'High';
+    puState.projectPct       = selProj.pct != null ? String(selProj.pct) : '';
+    puState.projectStart     = selProj.start      || '';
+    puState.projectEnd       = selProj.end        || '';
+    puState.projectBudget    = selProj.budget     || 'green';
+    puState.projectScope     = selProj.scope      || 'green';
+    puState.projectObjective = selProj.objective  || '';
+    puState.projectNote      = selProj.note       || '';
+    puState.milestoneLabel = selProj.milestoneLabel || '';
+    puState.milestoneDate  = selProj.milestoneDate  || '';
+  }
+
+  if (puState.method === 'paste') {
+    const ta = document.getElementById('puRawNotes');
+    const raw = ta ? ta.value.trim() : '';
+    if (!raw) { toast('Please paste your notes first'); return; }
+    puState.rawNotes = raw;
+    const btn = document.getElementById('puContBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Extracting…'; }
+    setTimeout(() => {
+      puState.items = _parseCopilotNotes(raw);
+      puState.parseSuccess = true;
+      puState.step = 2;
+      _renderPU();
+    }, 700);
+  } else {
+    puState.items = {
+      accomp:    [{ text:'', person:'', due:'', id:_uid() }],
+      upcoming:  [{ text:'', person:'', due:'', id:_uid() }],
+      watch:     [{ text:'', person:'', due:'', id:_uid() }],
+      decisions: [{ text:'', person:'', due:'', id:_uid() }],
+    };
+    puState.step = 2;
+    _renderPU();
+  }
+}
+
+function _parseCopilotNotes(raw) {
+  const out = { accomp:[], upcoming:[], watch:[], decisions:[] };
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 3);
+
+  const secRx = {
+    accomp:    /^(?:#+\s*|[*_]{1,2})(this week|accomplish|complet|done|status|deliver|summary)/i,
+    upcoming:  /^(?:#+\s*|[*_]{1,2})(upcoming|next|planned|milestone|action item|to[ -]?do|coming up)/i,
+    watch:     /^(?:#+\s*|[*_]{1,2})(risk|issue|watch|blocker|concern|impediment|escalat)/i,
+    decisions: /^(?:#+\s*|[*_]{1,2})(decision|approval|pending approval|action required|needs.*approval|leadership)/i,
+  };
+
+  let section = null;
+  lines.forEach(line => {
+    for (const [s, rx] of Object.entries(secRx)) { if (rx.test(line)) { section = s; return; } }
+    if (line.length < 5) return;
+    const clean = line.replace(/^(\d+[.)]\s+|[-•*→✓✔▸·]\s*)/, '').trim();
+    if (!clean || clean.length < 4) return;
+
+    const person = _extractName(clean);
+    const due    = _extractDate(clean);
+    const item   = { text:clean, person, due, id:_uid() };
+
+    if (section) { out[section].push(item); return; }
+    const decisionRx = /(?:decision|approval)\s+(?:needed|required)|pending.*approv|requires.*sign.?off|awaiting.*approv|vp.*approv|escalat.*approv/i;
+    const riskRx     = /risk|issue|blocker|concern|delay|behind|stuck|problem|escalat|off.?track|challeng|impediment/i;
+    const upRx       = /\bwill\b|plan to|next week|upcoming|schedule|target.*\d|deploy|release|mileston|prepar|begin next|action.*required/i;
+    const doneRx     = /complet|finish|done|delivered|deploy|launched|closed|resolved|signed|approved|released|migrat/i;
+    if (decisionRx.test(clean))  out.decisions.push(item);
+    else if (riskRx.test(clean)) out.watch.push(item);
+    else if (doneRx.test(clean)) out.accomp.push(item);
+    else if (upRx.test(clean))   out.upcoming.push(item);
+    else                         out.accomp.push(item);
+  });
+
+  ['accomp','upcoming','watch','decisions'].forEach(s => {
+    if (!out[s].length) out[s].push({ text:'', person:'', due:'', id:_uid() });
+  });
+  return out;
+}
+
+function _extractName(s) {
+  const m = s.match(/(?:owner|responsible|assigned to|lead|pm)\s*[:\-]\s*([A-Z][a-z]+ [A-Z][a-z]+)/i);
+  if (m) return m[1];
+  const p = s.match(/\(([A-Z][a-z]+ [A-Z][a-z]+)\)/);
+  return p ? p[1] : '';
+}
+function _extractDate(s) {
+  const rx = /(?:due|by|target|eod|eow|deadline)\s*[:\-]?\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2}(?:,?\s*\d{4})?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?|(?:next\s+)?(?:Mon|Tue|Wed|Thu|Fri|Monday|Tuesday|Wednesday|Thursday|Friday)|end\s+of\s+(?:week|month|quarter|sprint))/i;
+  const m = s.match(rx);
+  if (m) return m[1];
+  const dm = s.match(/\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2})\b/);
+  return dm ? dm[1] : '';
+}
+
+function _puStep2Html() {
+  const p = db.projects.find(x => x.id === puState.projectId);
+  const pName = p ? esc(p.name) : 'Unknown Project';
+  const total = Object.values(puState.items).reduce((n,a) => n + a.filter(i => i.text.trim()).length, 0);
+
+  const banner = (puState.parseSuccess && total > 0) ? `
+  <div class="pu-parse-ok">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#027A48" stroke-width="1.5"/><path d="M5 8l2.5 2.5L11 5.5" stroke="#027A48" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Found <strong>${total} item${total!==1?'s':''}</strong> — review and edit before posting.
+  </div>` : '';
+
+  const renderSec = (key, label, secCls='', iconHtml='') => {
+    const items = puState.items[key] || [];
+    const rows = items.map((item, idx) => `
+      <div class="pu-item">
+        <div class="pu-item-main">
+          <div class="pu-item-dot"></div>
+          <input class="pu-item-txt" placeholder="Describe the activity or update…" value="${esc(item.text)}" oninput="puState.items['${key}'][${idx}].text=this.value">
+          <button class="pu-item-del" onclick="puRemoveItem('${key}',${idx})" title="Remove item">
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="pu-item-meta">
+          <input class="pu-meta-in" placeholder="Responsible person" value="${esc(item.person)}" oninput="puState.items['${key}'][${idx}].person=this.value">
+          <input class="pu-meta-in pu-meta-date" placeholder="Due date" value="${esc(item.due)}" oninput="puState.items['${key}'][${idx}].due=this.value">
+        </div>
+      </div>`).join('');
+    return `
+    <div class="pu-sec ${secCls}">
+      <div class="pu-sec-hdr">
+        <div class="pu-sec-lbl">${iconHtml}${label}</div>
+        <button class="pu-add-btn" onclick="puAddItem('${key}')">+ Add item</button>
+      </div>
+      ${rows}
+    </div>`;
+  };
+
+  const warnIcon = `<svg width="11" height="11" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><path d="M8 1.5L1 13.5h14L8 1.5z" stroke="#B54708" stroke-width="1.5" stroke-linejoin="round"/><line x1="8" y1="6" x2="8" y2="9.5" stroke="#B54708" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.5" r=".8" fill="#B54708"/></svg>`;
+  const flagIcon = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" stroke="#175CD3" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/><line x1="4" y1="22" x2="4" y2="15" stroke="#175CD3" stroke-width="1.75" stroke-linecap="round"/></svg>`;
+
+  const ragBtns = (field) => {
+    const val = puState['project' + field] || 'green';
+    const m = {green:'sg', amber:'sa', red:'sr'};
+    return ['green','amber','red'].map(v =>
+      `<button type="button" class="rag-opt${val===v?' '+m[v]:''}" data-v="${v}" onclick="puSetRag('${field}','${v}',this)">${v.charAt(0).toUpperCase()+v.slice(1)}</button>`
+    ).join('');
+  };
+
+  return `
+  <div class="pu-overlay" id="puOverlay" onclick="if(event.target===this)closePMUpdate()">
+    <div class="pu-modal">
+      <div class="pu-head">
+        <div><div class="pu-title">PM Update</div><div class="pu-step-lbl">${pName} · Step 2 of 2</div></div>
+        ${_puCloseBtn()}
+      </div>
+      <div class="pu-body">
+        ${banner}
+
+        <!-- Week of row -->
+        <div class="pu-week-row" style="margin-bottom:20px">
+          <div class="pu-week-lbl">Week of</div>
+          <input type="date" class="pu-week-input" value="${puState.weekOf}" onchange="puState.weekOf=this.value">
+        </div>
+
+        <!-- ── PROJECT RECORD ────────────────────────── -->
+        <div class="pu-form-sec-lbl">Project Record</div>
+
+        <div style="margin-bottom:12px">
+          <div class="pu-field-lbl" style="margin-bottom:5px">Project Name *</div>
+          <input type="text" class="pu-input" placeholder="e.g. DN - Store Starlink Deployment" value="${esc(puState.projectName||'')}" oninput="puState.projectName=this.value">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div>
+            <div class="pu-field-lbl" style="margin-bottom:5px">Project Manager</div>
+            <input type="text" class="pu-input" placeholder="Full name" value="${esc(puState.projectOwner||'')}" oninput="puState.projectOwner=this.value">
+          </div>
+          <div>
+            <div class="pu-field-lbl" style="margin-bottom:5px">Manager Name</div>
+            <input type="text" class="pu-input" placeholder="Direct manager name" value="${esc(puState.projectDept||'')}" oninput="puState.projectDept=this.value">
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+          <div>
+            <div class="pu-field-lbl" style="margin-bottom:5px">Clarity ID</div>
+            <input type="text" class="pu-input" placeholder="PR000552" value="${esc(puState.projectClarityId||'')}" oninput="puState.projectClarityId=this.value">
+          </div>
+          <div>
+            <div class="pu-field-lbl" style="margin-bottom:5px">Start Date</div>
+            <input type="date" class="pu-input" value="${esc(puState.projectStart||'')}" onchange="puState.projectStart=this.value">
+          </div>
+          <div>
+            <div class="pu-field-lbl" style="margin-bottom:5px">Target End Date</div>
+            <input type="date" class="pu-input" value="${esc(puState.projectEnd||'')}" onchange="puState.projectEnd=this.value">
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div>
+            <div class="pu-field-lbl" style="margin-bottom:5px">Status *</div>
+            <select class="pu-select" onchange="puState.projectStatus=this.value">
+              <option value="on-track"  ${puState.projectStatus==='on-track' ?'selected':''}>On Track</option>
+              <option value="at-risk"   ${puState.projectStatus==='at-risk'  ?'selected':''}>At Risk</option>
+              <option value="off-track" ${puState.projectStatus==='off-track'?'selected':''}>Off Track</option>
+              <option value="complete"  ${puState.projectStatus==='complete' ?'selected':''}>Complete</option>
+              <option value="on-hold"   ${puState.projectStatus==='on-hold'  ?'selected':''}>On Hold</option>
+            </select>
+          </div>
+          <div>
+            <div class="pu-field-lbl" style="margin-bottom:5px">Priority *</div>
+            <select class="pu-select" onchange="puState.projectPriority=this.value">
+              <option value="Critical" ${puState.projectPriority==='Critical'?'selected':''}>Critical Priority</option>
+              <option value="High"     ${puState.projectPriority==='High'    ?'selected':''}>High Priority</option>
+              <option value="Medium"   ${puState.projectPriority==='Medium'  ?'selected':''}>Medium Priority</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <div class="pu-field-lbl" style="margin-bottom:8px">Progress <span style="font-size:11px;color:var(--g400);font-weight:400">optional</span></div>
+          <div style="display:flex;gap:5px;align-items:center">
+            <input type="number" style="width:62px;border:1px solid var(--g300);border-radius:6px;padding:6px 8px;font:12px Inter,sans-serif;outline:none;color:var(--g900)" placeholder="612" value="${esc(puState.progressCurrent||'')}" oninput="puState.progressCurrent=this.value">
+            <span style="color:var(--g400);font-size:13px;font-weight:500">/</span>
+            <input type="number" style="width:62px;border:1px solid var(--g300);border-radius:6px;padding:6px 8px;font:12px Inter,sans-serif;outline:none;color:var(--g900)" placeholder="700" value="${esc(puState.progressTotal||'')}" oninput="puState.progressTotal=this.value">
+            <input type="text" style="flex:1;min-width:0;border:1px solid var(--g300);border-radius:6px;padding:6px 8px;font:12px Inter,sans-serif;outline:none;color:var(--g900)" placeholder="stores, VIPs, locations…" value="${esc(puState.progressUnit||'')}" oninput="puState.progressUnit=this.value">
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+          <div>
+            <div class="pu-field-lbl" style="margin-bottom:6px">Budget Health</div>
+            <div class="rag-opts">${ragBtns('Budget')}</div>
+          </div>
+          <div>
+            <div class="pu-field-lbl" style="margin-bottom:6px">Scope Health</div>
+            <div class="rag-opts">${ragBtns('Scope')}</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <div class="pu-field-lbl" style="margin-bottom:5px">Initiative Objective</div>
+          <textarea class="pu-textarea" style="min-height:60px" placeholder="High-level objective statement…" oninput="puState.projectObjective=this.value">${esc(puState.projectObjective||'')}</textarea>
+        </div>
+        <div style="margin-bottom:12px">
+          <div class="pu-field-lbl" style="margin-bottom:5px">Status Note</div>
+          <textarea class="pu-textarea" style="min-height:52px" placeholder="Brief current status commentary…" oninput="puState.projectNote=this.value">${esc(puState.projectNote||'')}</textarea>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--g200)">
+          <div>
+            <div class="pu-field-lbl" style="margin-bottom:5px">Next Milestone <span style="font-size:11px;color:var(--g400);font-weight:400">optional</span></div>
+            <input type="text" class="pu-input" placeholder="e.g. Go Live, UAT Complete" value="${esc(puState.milestoneLabel||'')}" oninput="puState.milestoneLabel=this.value">
+          </div>
+          <div>
+            <div class="pu-field-lbl" style="margin-bottom:5px">Milestone Date</div>
+            <input type="date" class="pu-input" value="${esc(puState.milestoneDate||'')}" onchange="puState.milestoneDate=this.value">
+          </div>
+        </div>
+
+        <!-- ── WEEKLY UPDATE ─────────────────────────── -->
+        <div class="pu-form-sec-lbl">Weekly Update</div>
+
+        <div style="margin-bottom:18px">
+          <div class="pu-field-lbl">Executive Summary <span style="font-size:11px;color:var(--g400);font-weight:400">— 1–2 sentence TL;DR for leadership</span></div>
+          <textarea class="pu-textarea" style="min-height:66px;margin-top:6px" id="puSummary" placeholder="e.g. On track for June 27 at 87%. Expedited shipping decision needed this week." oninput="puState.summary=this.value">${esc(puState.summary||'')}</textarea>
+        </div>
+
+        ${renderSec('accomp',   'This Week')}
+        ${renderSec('upcoming', 'Upcoming Work')}
+        ${renderSec('watch',    'Watch Items',                 'pu-sec-watch',     warnIcon)}
+        ${renderSec('decisions','Leadership Decisions Needed', 'pu-sec-decisions', flagIcon)}
+      </div>
+      <div class="pu-foot">
+        <button class="btn btn-ghost" onclick="puGoBack()">← Back</button>
+        <button class="btn btn-primary" onclick="postPMUpdate()">Post Update</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function puAddItem(section) {
+  if (!puState) return;
+  puState.items[section].push({ text:'', person:'', due:'', id:_uid() });
+  _renderPU();
+  setTimeout(() => {
+    const list = document.querySelectorAll(`.pu-sec .pu-item`);
+    const last = list[list.length - 1];
+    if (last) last.querySelector('.pu-item-txt')?.focus();
+  }, 40);
+}
+
+function puRemoveItem(section, idx) {
+  if (!puState) return;
+  puState.items[section].splice(idx, 1);
+  if (!puState.items[section].length)
+    puState.items[section].push({ text:'', person:'', due:'', id:_uid() });
+  _renderPU();
+}
+
+function puGoBack() {
+  if (!puState) return;
+  puState.step = 1;
+  puState.parseSuccess = false;
+  _renderPU();
+}
+
+function puSetRag(field, val, btn) {
+  if (!puState) return;
+  puState['project' + field] = val;
+  const m = {green:'sg', amber:'sa', red:'sr'};
+  btn.closest('.rag-opts').querySelectorAll('.rag-opt').forEach(b => {
+    b.className = 'rag-opt' + (b.dataset.v === val ? ' ' + m[val] : '');
+  });
+}
+
+function postPMUpdate() {
+  if (!puState) return;
+  const p = db.projects.find(x => x.id === puState.projectId);
+  if (!p) { toast('Project not found'); return; }
+
+  const toText = arr => arr
+    .filter(i => i.text && i.text.trim())
+    .map(i => {
+      let line = i.text.trim();
+      const meta = [i.person && i.person.trim(), i.due && i.due.trim()].filter(Boolean);
+      if (meta.length) line += ' (' + meta.join(' · ') + ')';
+      return line;
+    }).join('\n');
+
+  // Write all project fields back to the record
+  const projIdx = db.projects.findIndex(x => x.id === puState.projectId);
+  if (projIdx >= 0) {
+    const proj = db.projects[projIdx];
+    if ((puState.projectName||'').trim()) proj.name = puState.projectName.trim();
+    proj.owner     = (puState.projectOwner     || '').trim();
+    proj.dept      = (puState.projectDept      || '').trim();
+    proj.clarityId = (puState.projectClarityId || '').trim();
+    proj.status    = puState.projectStatus  || proj.status;
+    proj.priority  = puState.projectPriority || proj.priority;
+    proj.pct       = Math.min(100, Math.max(0, parseInt(puState.projectPct) || 0));
+    proj.start     = puState.projectStart   || '';
+    proj.end       = puState.projectEnd     || '';
+    proj.budget    = puState.projectBudget  || 'green';
+    proj.scope     = puState.projectScope   || 'green';
+    proj.objective = (puState.projectObjective || '').trim();
+    proj.note      = (puState.projectNote      || '').trim();
+    proj.milestoneLabel = (puState.milestoneLabel || '').trim();
+    proj.milestoneDate  = puState.milestoneDate  || '';
+  }
+
+  const entry = {
+    id:              'upd_' + puState.projectId + '_' + Date.now(),
+    savedAt:         new Date().toISOString(),
+    weekOf:          puState.weekOf,
+    pm:              p.owner || '',
+    statusSnap:      puState.projectStatus || p.status,
+    summary:         (puState.summary || '').trim(),
+    progressCurrent: puState.progressCurrent || '',
+    progressTotal:   puState.progressTotal   || '',
+    progressUnit:    puState.progressUnit     || '',
+    accomp:          toText(puState.items.accomp),
+    upcoming:        toText(puState.items.upcoming),
+    risks:           toText(puState.items.watch),
+    decisions:       toText(puState.items.decisions || []),
+    issues:          '',
+  };
+
+  if (!db.updates) db.updates = {};
+  if (!db.updates[puState.projectId]) db.updates[puState.projectId] = [];
+  db.updates[puState.projectId].unshift(entry);
+
+  persist(); renderAll(); closePMUpdate();
+  toast('Update posted — ' + p.name);
+}
+
+// ─── Weekly Digest ───────────────────────────────────────────────────────────
+function openDigest() {
+  const today = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const projs = db.projects;
+  const groups = {
+    'off-track': projs.filter(p=>p.status==='off-track'),
+    'at-risk':   projs.filter(p=>p.status==='at-risk'),
+    'on-track':  projs.filter(p=>p.status==='on-track'),
+    'complete':  projs.filter(p=>p.status==='complete'),
+    'on-hold':   projs.filter(p=>p.status==='on-hold'),
+  };
+
+  const allDecisions = [];
+  projs.forEach(p => {
+    const latest = ((db.updates||{})[p.id]||[])[0];
+    if (latest?.decisions?.trim()) {
+      latest.decisions.split('\n').filter(l=>l.trim()).forEach(d => {
+        allDecisions.push(`  • ${d.trim()} — ${p.name}`);
+      });
+    }
+  });
+
+  const fmt = (arr, icon) => arr.length ? arr.map(p => {
+    const latest = ((db.updates||{})[p.id]||[])[0];
+    const note = latest?.summary || p.note || '';
+    return `  • ${p.name}${p.owner?' · '+p.owner:''}${note?' — '+note:''}`;
+  }).join('\n') : '  (none)';
+
+  const text = [
+    `📊 PMO WEEKLY STATUS DIGEST`,
+    `${today}`,
+    `${'─'.repeat(50)}`,
+    '',
+    `🚨 OFF TRACK (${groups['off-track'].length})`,
+    fmt(groups['off-track']),
+    '',
+    `⚠️  AT RISK (${groups['at-risk'].length})`,
+    fmt(groups['at-risk']),
+    '',
+    `✅ ON TRACK (${groups['on-track'].length})`,
+    fmt(groups['on-track']),
+    '',
+    ...(groups['complete'].length ? [`🏁 COMPLETE (${groups['complete'].length})`, fmt(groups['complete']), ''] : []),
+    ...(groups['on-hold'].length  ? [`⏸  ON HOLD (${groups['on-hold'].length})`,  fmt(groups['on-hold']),  ''] : []),
+    `${'─'.repeat(50)}`,
+    `🚩 DECISIONS NEEDED (${allDecisions.length})`,
+    allDecisions.length ? allDecisions.join('\n') : '  (none)',
+    '',
+    `Generated by PMO Dashboard · ${today}`,
+  ].join('\n');
+
+  let container = document.getElementById('digestModal');
+  if (!container) { container = document.createElement('div'); container.id = 'digestModal'; document.body.appendChild(container); }
+  container.innerHTML = `
+    <div class="digest-overlay" onclick="if(event.target===this)closeDigest()">
+      <div class="digest-modal">
+        <div style="padding:18px 24px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--g900)">Weekly Status Digest</div>
+            <div style="font-size:12px;color:var(--g400);margin-top:2px">${today} · ${projs.length} initiatives</div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost" onclick="copyDigest()" style="font-size:11px">
+              <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              Copy
+            </button>
+            <button onclick="closeDigest()" style="width:28px;height:28px;border:none;border-radius:6px;background:var(--g100);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--g500)">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="digest-body">
+          <div class="digest-text" id="digestText">${text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+        </div>
+      </div>
+    </div>`;
+}
+function closeDigest() { const el = document.getElementById('digestModal'); if(el) el.innerHTML=''; }
+function copyDigest() {
+  const el = document.getElementById('digestText');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => toast('Digest copied to clipboard'));
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+renderAll();
+</script>
+<div id="puModal"></div>
+</body>
+</html>
