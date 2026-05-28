@@ -323,12 +323,8 @@
         <span class="chip" id="updChip">—</span>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
-        <button class="btn btn-ghost" onclick="openDigest()">
-          <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-          Digest
-        </button>
         <button class="btn btn-primary" onclick="openPMUpdate()">
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>New PM Update
+          <svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>New Project Update
         </button>
       </div>
     </div>
@@ -604,7 +600,8 @@ let editId     = null;
 let editArea   = null;
 let currentView = 'portfolio'; // 'home' | 'portfolio'
 let searchQuery = '';
-let pmFilter = null;
+let pmFilter    = null;
+let prioFilter  = null;
 
 function load() {
   try {
@@ -709,6 +706,7 @@ function renderAreas() {
   let projs = areaFilter === 'all' ? db.projects : db.projects.filter(p => p.area === areaFilter);
   if (statFilter) projs = projs.filter(p => p.status === statFilter);
   if (pmFilter) projs = projs.filter(p => p.owner === pmFilter);
+  if (prioFilter) projs = projs.filter(p => p.priority === prioFilter);
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
     projs = projs.filter(p =>
@@ -721,11 +719,12 @@ function renderAreas() {
   projs = projs.slice().sort((a,b) => (PRIO_ORDER[a.priority]??3) - (PRIO_ORDER[b.priority]??3));
 
   const areaLabel = areaFilter === 'all' ? 'All Areas' : (AREAS.find(a=>a.id===areaFilter)?.label || '');
+  const prioLabel = prioFilter ? ` · ${prioFilter} Priority` : '';
   const secTitle = searchQuery
     ? `${projs.length} result${projs.length!==1?'s':''} for "${esc(searchQuery)}"`
     : statFilter
-      ? `${SC[statFilter]?.label || ''} — ${projs.length} project${projs.length!==1?'s':''}`
-      : `${areaLabel} — ${projs.length} initiative${projs.length!==1?'s':''}`;
+      ? `${SC[statFilter]?.label || ''}${prioLabel} — ${projs.length} project${projs.length!==1?'s':''}`
+      : `${areaLabel}${prioLabel} — ${projs.length} initiative${projs.length!==1?'s':''}`;
 
   const cards = projs.length
     ? projs.map(p => projCard(p)).join('')
@@ -734,7 +733,7 @@ function renderAreas() {
   const pms = [...new Set(db.projects.map(p=>p.owner||'').filter(Boolean))].sort();
   const pmPillsHtml = pms.length > 1 ? `
     <div class="filter-bar" style="margin-bottom:10px">
-      <span class="filter-lbl">PM</span>
+      <span class="filter-lbl">Project Manager</span>
       <button class="dr-btn${!pmFilter?' active':''}" onclick="setPmFilter(null,this)">All PMs</button>
       ${pms.map(pm=>`<button class="dr-btn${pmFilter===pm?' active':''}" onclick="setPmFilter(${JSON.stringify(pm)},this)">${esc(pm)}</button>`).join('')}
     </div>` : '';
@@ -899,8 +898,69 @@ function renderPortfolio() {
       </div>`;
   }).join('') || `<div style="padding:24px 0;text-align:center;font-size:12px;color:var(--g400)">No updates yet</div>`;
 
+  // ── Heatmap ──────────────────────────────────────────────────────────────────
+  const HM_COLS = [
+    { id:'off-track', label:'Off Track', bg:'#FEF3F2', col:'#B42318' },
+    { id:'at-risk',   label:'At Risk',   bg:'#FFFAEB', col:'#B54708' },
+    { id:'on-track',  label:'On Track',  bg:'#ECFDF3', col:'#027A48' },
+    { id:'complete',  label:'Complete',  bg:'#EFF8FF', col:'#175CD3' },
+    { id:'on-hold',   label:'On Hold',   bg:'#F4F3FF', col:'#5925DC' },
+  ];
+
+  const hmCell = (count, bg, col, clickFn) => count > 0
+    ? `<div onclick="${clickFn}" style="background:${bg};border-radius:7px;padding:12px 6px;text-align:center;cursor:pointer;transition:opacity .13s" onmouseenter="this.style.opacity='.75'" onmouseleave="this.style.opacity='1'">
+        <div style="font-size:20px;font-weight:800;color:${col};line-height:1">${count}</div>
+       </div>`
+    : `<div style="background:var(--g50);border-radius:7px;padding:12px 6px;text-align:center">
+        <div style="font-size:15px;color:var(--g200);font-weight:600">—</div>
+       </div>`;
+
+  const hmColHeaders = `<div></div>${HM_COLS.map(s=>`<div style="text-align:center;padding:4px 4px 10px;font-size:10px;font-weight:700;color:${s.col};text-transform:uppercase;letter-spacing:.06em">${s.label}</div>`).join('')}`;
+
+  const hmAreaRows = AREAS.map(a => {
+    const ap = projs.filter(p => p.area === a.id);
+    return `<div style="display:flex;align-items:center;gap:7px;padding:2px 0;min-width:0">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--orange);flex-shrink:0"></span>
+      <span style="font-size:11.5px;font-weight:600;color:var(--g700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(a.label)}</span>
+    </div>
+    ${HM_COLS.map(s => {
+      const n = ap.filter(p=>p.status===s.id).length;
+      return hmCell(n, s.bg, s.col, `setAreaAndStatus('${a.id}','${s.id}')`);
+    }).join('')}`;
+  }).join('');
+
+  const hmPrioRows = [
+    {id:'Critical', cls:'bp-critical', dot:'#F04438'},
+    {id:'High',     cls:'bp-high',     dot:'#F79009'},
+    {id:'Medium',   cls:'bp-medium',   dot:'#98A2B3'},
+  ].map(pr => {
+    const pp = projs.filter(p => p.priority === pr.id);
+    return `<div style="display:flex;align-items:center;padding:2px 0">
+      <span class="badge ${pr.cls}" style="font-size:10px">${pr.id} Priority</span>
+    </div>
+    ${HM_COLS.map(s => {
+      const n = pp.filter(p=>p.status===s.id).length;
+      return hmCell(n, s.bg, s.col, `setPrioAndStatus('${pr.id}','${s.id}')`);
+    }).join('')}`;
+  }).join('');
+
+  const heatmapHtml = `
+    <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:18px 20px;margin-bottom:26px">
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--g900);margin-bottom:2px">Initiative Heatmap</div>
+        <div style="font-size:11.5px;color:var(--g400)">Click any cell to view matching initiatives in Initiatives view</div>
+      </div>
+      <div style="display:grid;grid-template-columns:170px repeat(5,1fr);gap:5px;align-items:center">
+        ${hmColHeaders}
+        ${hmAreaRows}
+        <div style="grid-column:1/-1;height:1px;background:var(--g100);margin:4px 0"></div>
+        ${hmPrioRows}
+      </div>
+    </div>`;
+
   document.getElementById('areas').innerHTML = `
     ${statStrip}
+    ${heatmapHtml}
     <div class="sec-head"><span class="sec-title">Portfolio Health</span></div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px">${areaCards}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
@@ -972,7 +1032,7 @@ function projCard(p) {
       <div class="card-owner">${esc(p.owner || '—')}</div>
       ${p.objective ? `<div class="card-desc">${esc(p.objective)}</div>` : '<div style="flex:1"></div>'}
       ${hasMilestone ? `<div style="padding-top:6px"><span class="ms-chip">📅 ${esc(p.milestoneLabel)} · ${fDateShort(p.milestoneDate)}</span></div>` : ''}
-      ${isStale ? `<div style="padding-top:8px"><span class="stale-badge">No update in ${daysSince > 999 ? '—' : daysSince+'d'}</span></div>` : ''}
+      <div style="padding-top:8px;font-size:10.5px;color:var(--g400)">${cardLatest?.weekOf ? 'Last update · ' + fDateShort(cardLatest.weekOf) : 'No updates yet'}</div>
     </div>
   </div>`;
 }
@@ -996,7 +1056,7 @@ function selectProj(id) {
 // ─── Filters ─────────────────────────────────────────────────────────────────
 function setArea(id, btn) {
   currentView = 'home';
-  areaFilter = id; statFilter = null; searchQuery = ''; pmFilter = null;
+  areaFilter = id; statFilter = null; searchQuery = ''; pmFilter = null; prioFilter = null;
   const inp = document.getElementById('srchInput'); if(inp) inp.value='';
   const clr = document.getElementById('srchClear'); if(clr) clr.style.display='none';
   document.getElementById('overviewRow').style.display = '';
@@ -1067,10 +1127,18 @@ function setPmFilter(pm, btn) {
 }
 function setAreaAndStatus(aId, status) {
   currentView = 'home';
-  areaFilter = aId; statFilter = status; searchQuery = ''; pmFilter = null;
+  areaFilter = aId; statFilter = status; searchQuery = ''; pmFilter = null; prioFilter = null;
   document.getElementById('overviewRow').style.display = '';
   document.querySelectorAll('.ls-item').forEach(b=>b.classList.remove('active'));
   document.querySelector(`.ls-item[data-area="${aId}"]`)?.classList.add('active');
+  renderOverview(); renderAreas();
+}
+function setPrioAndStatus(prio, status) {
+  currentView = 'home';
+  areaFilter = 'all'; statFilter = status; prioFilter = prio; searchQuery = ''; pmFilter = null;
+  document.getElementById('overviewRow').style.display = '';
+  document.querySelectorAll('.ls-item').forEach(b=>b.classList.remove('active'));
+  document.querySelector('.ls-item[data-area="all"]')?.classList.add('active');
   renderOverview(); renderAreas();
 }
 
