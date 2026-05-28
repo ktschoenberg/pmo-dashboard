@@ -722,7 +722,7 @@ function renderAreas() {
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
     projs = projs.filter(p =>
-      (p.name||'').toLowerCase().includes(q) ||
+      (stripPfx(p.name)||'').toLowerCase().includes(q) ||
       (p.owner||'').toLowerCase().includes(q) ||
       (p.objective||'').toLowerCase().includes(q)
     );
@@ -763,6 +763,7 @@ function renderAreas() {
 }
 
 const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const stripPfx = n => (n||'').replace(/^(DN|DCNS|UC|NATM)\s*[-–]\s*/i,'');
 
 // ── Portfolio view ────────────────────────────────────────────────────────────
 function showPortfolio(btn) {
@@ -805,7 +806,7 @@ function renderPortfolio() {
     const latest = ((db.updates||{})[p.id]||[])[0];
     if (latest?.items?.decisions) {
       latest.items.decisions.filter(d => d.text?.trim()).forEach(d => {
-        allDecisions.push({ projName:p.name, projId:p.id, text:d.text, person:d.person, area:p.area });
+        allDecisions.push({ projName:stripPfx(p.name), projId:p.id, text:d.text, person:d.person, area:p.area });
       });
     }
   });
@@ -908,7 +909,7 @@ function renderPortfolio() {
         <span class="badge ${sc2.bc}">${sc2.label}</span>
         ${pc2?`<span class="badge ${pc2}">${esc(p.priority)} Priority</span>`:''}
       </div>
-      <div style="font-size:12.5px;font-weight:600;color:var(--g900);margin-bottom:2px">${esc(p.name)}</div>
+      <div style="font-size:12.5px;font-weight:600;color:var(--g900);margin-bottom:2px">${esc(stripPfx(p.name))}</div>
       ${note?`<div style="font-size:11.5px;color:var(--g500);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(note)}</div>`:''}
     </div>`;
   }).join('')
@@ -921,7 +922,7 @@ function renderPortfolio() {
         <span style="color:#F79009;font-weight:700;flex-shrink:0;line-height:1.5">›</span>
         <div style="min-width:0">
           <div style="font-size:12px;color:var(--g800);line-height:1.5">${esc(d.text)}</div>
-          <div style="font-size:10.5px;color:var(--g400);margin-top:2px">${esc(d.projName)}</div>
+          <div style="font-size:10.5px;color:var(--g400);margin-top:2px">${esc(stripPfx(d.projName))}</div>
         </div>
       </div>
       ${d.person?`<span style="font-size:11px;font-weight:600;color:#92400E;background:rgba(254,200,75,.28);padding:2px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0">${esc(d.person)}</span>`:''}
@@ -939,7 +940,7 @@ function renderPortfolio() {
         <div style="width:8px;height:8px;border-radius:50%;background:${sc3.ringColor};flex-shrink:0;margin-top:4px"></div>
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:7px;margin-bottom:2px;flex-wrap:wrap">
-            <span style="font-size:12.5px;font-weight:600;color:var(--g900)">${esc(r.proj.name)}</span>
+            <span style="font-size:12.5px;font-weight:600;color:var(--g900)">${esc(stripPfx(r.proj.name))}</span>
             <span class="badge ${sc3.bc}" style="font-size:10.5px">${sc3.label}</span>
           </div>
           ${r.upd.summary?`<div style="font-size:11.5px;color:var(--g500);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.upd.summary)}</div>`:''}
@@ -1040,7 +1041,7 @@ function renderPortfolioV2() {
     const latest = ((db.updates||{})[p.id]||[])[0];
     if (latest?.items?.decisions) {
       latest.items.decisions.filter(d => d.text?.trim()).forEach(d => {
-        allDecisions.push({ projName:p.name, projId:p.id, text:d.text, person:d.person, area:p.area });
+        allDecisions.push({ projName:stripPfx(p.name), projId:p.id, text:d.text, person:d.person, area:p.area });
       });
     }
   });
@@ -1250,7 +1251,7 @@ function renderPortfolioV2() {
         <span class="badge ${sc2.bc}">${sc2.label}</span>
         ${pc2 ? `<span class="badge ${pc2}">${esc(p.priority)} Priority</span>` : ''}
       </div>
-      <div style="font-size:12.5px;font-weight:600;color:var(--g900);margin-bottom:2px">${esc(p.name)}</div>
+      <div style="font-size:12.5px;font-weight:600;color:var(--g900);margin-bottom:2px">${esc(stripPfx(p.name))}</div>
       ${note ? `<div style="font-size:11.5px;color:var(--g500);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(note)}</div>` : ''}
     </div>`;
   }).join('')
@@ -1264,7 +1265,7 @@ function renderPortfolioV2() {
         <span style="color:#F79009;font-weight:700;flex-shrink:0;line-height:1.5">›</span>
         <div style="min-width:0">
           <div style="font-size:12px;color:var(--g800);line-height:1.5">${esc(d.text)}</div>
-          <div style="font-size:10.5px;color:var(--g400);margin-top:2px">${esc(d.projName)}</div>
+          <div style="font-size:10.5px;color:var(--g400);margin-top:2px">${esc(stripPfx(d.projName))}</div>
         </div>
       </div>
       ${d.person ? `<span style="font-size:11px;font-weight:600;color:#92400E;background:rgba(254,200,75,.28);padding:2px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0">${esc(d.person)}</span>` : ''}
@@ -1400,7 +1401,7 @@ function projCard(p) {
         <span class="card-area-dot" style="background:${a.color}"></span>
         <span class="card-area-lbl">${esc(a.label)}</span>
       </div>
-      <div class="card-name">${esc(p.name)}</div>
+      <div class="card-name">${esc(stripPfx(p.name))}</div>
       <div class="card-owner">${esc(p.owner || '—')}</div>
       ${p.objective ? `<div class="card-desc">${esc(p.objective)}</div>` : '<div style="flex:1"></div>'}
       ${hasMilestone ? `<div style="padding-top:6px"><span class="ms-chip">📅 ${esc(p.milestoneLabel)} · ${fDateShort(p.milestoneDate)}</span></div>` : ''}
@@ -1886,7 +1887,7 @@ function showLeadershipDetail(id) {
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           </button>
         </div>
-        <div class="ld-proj-name">${esc(p.name)}</div>
+        <div class="ld-proj-name">${esc(stripPfx(p.name))}</div>
         <div class="ld-proj-sub">
           <span>${ownerStr}</span>
           ${weekStr ? `<span style="color:var(--g300)">·</span><span>${weekStr}</span>` : ''}
@@ -1979,7 +1980,7 @@ function _puStep1Html() {
     .slice().sort((a,b) => a.name.localeCompare(b.name))
     .map(p => {
       const area = AREAS.find(x => x.id === p.area);
-      return `<option value="${esc(p.id)}" ${puState.projectId===p.id?'selected':''}>${esc(p.name)}${area?' — '+esc(area.label):''}</option>`;
+      return `<option value="${esc(p.id)}" ${puState.projectId===p.id?'selected':''}>${esc(stripPfx(p.name))}${area?' — '+esc(area.label):''}</option>`;
     }).join('');
   const isPaste = puState.method === 'paste';
 
@@ -2148,7 +2149,7 @@ function _extractDate(s) {
 
 function _puStep2Html() {
   const p = db.projects.find(x => x.id === puState.projectId);
-  const pName = p ? esc(p.name) : 'Unknown Project';
+  const pName = p ? esc(stripPfx(p.name)) : 'Unknown Project';
   const total = Object.values(puState.items).reduce((n,a) => n + a.filter(i => i.text.trim()).length, 0);
 
   const banner = (puState.parseSuccess && total > 0) ? `
@@ -2419,7 +2420,7 @@ function postPMUpdate() {
   db.updates[puState.projectId].unshift(entry);
 
   persist(); renderAll(); closePMUpdate();
-  toast('Update posted — ' + p.name);
+  toast('Update posted — ' + stripPfx(p.name));
 }
 
 // ─── Weekly Digest ───────────────────────────────────────────────────────────
@@ -2439,7 +2440,7 @@ function openDigest() {
     const latest = ((db.updates||{})[p.id]||[])[0];
     if (latest?.decisions?.trim()) {
       latest.decisions.split('\n').filter(l=>l.trim()).forEach(d => {
-        allDecisions.push(`  • ${d.trim()} — ${p.name}`);
+        allDecisions.push(`  • ${d.trim()} — ${stripPfx(p.name)}`);
       });
     }
   });
@@ -2447,7 +2448,7 @@ function openDigest() {
   const fmt = (arr, icon) => arr.length ? arr.map(p => {
     const latest = ((db.updates||{})[p.id]||[])[0];
     const note = latest?.summary || p.note || '';
-    return `  • ${p.name}${p.owner?' · '+p.owner:''}${note?' — '+note:''}`;
+    return `  • ${stripPfx(p.name)}${p.owner?' · '+p.owner:''}${note?' — '+note:''}`;
   }).join('\n') : '  (none)';
 
   const text = [
