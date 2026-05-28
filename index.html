@@ -289,6 +289,11 @@
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         Home
       </button>
+      <button class="ls-item" id="pfV2NavBtn" onclick="showPortfolioV2(this)">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Home V2
+        <span style="margin-left:auto;font-size:9px;font-weight:700;background:var(--orange);color:#fff;padding:1px 6px;border-radius:10px;letter-spacing:.3px;">NEW</span>
+      </button>
       <button class="ls-item" data-area="all" onclick="setArea('all',this)">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
         Initiatives <span class="ls-count" id="sc-all">0</span>
@@ -642,8 +647,12 @@ function renderAll() {
   const ovr = document.getElementById('overviewRow');
   if (currentView === 'portfolio') {
     if (ovr) ovr.style.display = 'none';
-    document.getElementById('cActionsBar').style.display = 'none';
+    showTopBar();
     renderPortfolio(); renderSidebarCounts(); renderChip();
+  } else if (currentView === 'portfoliov2') {
+    if (ovr) ovr.style.display = 'none';
+    document.getElementById('cActionsBar').style.display = 'none';
+    renderPortfolioV2(); renderSidebarCounts(); renderChip();
   } else {
     if (ovr) ovr.style.display = '';
     showTopBar();
@@ -759,16 +768,204 @@ const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replac
 function showPortfolio(btn) {
   currentView = 'portfolio';
   document.getElementById('overviewRow').style.display = 'none';
-  document.getElementById('cActionsBar').style.display = 'none';
+  showTopBar();
   document.querySelectorAll('.ls-item').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   renderPortfolio();
+}
+function showPortfolioV2(btn) {
+  currentView = 'portfoliov2';
+  document.getElementById('overviewRow').style.display = 'none';
+  document.getElementById('cActionsBar').style.display = 'none';
+  document.querySelectorAll('.ls-item').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderPortfolioV2();
 }
 function showTopBar() {
   const bar = document.getElementById('cActionsBar');
   if (bar) bar.style.display = '';
 }
 
+// ── Original Portfolio (Home) view ───────────────────────────────────────────
+function pfStat(label, value, sub, accent) {
+  return `<div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:14px 18px;box-shadow:0 1px 2px rgba(16,24,40,.05)">
+    <div style="font-size:11px;font-weight:600;color:var(--g500);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">${label}</div>
+    <div style="font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1;color:${accent};margin-bottom:3px">${value}</div>
+    ${sub ? `<div style="font-size:11px;color:var(--g400)">${sub}</div>` : ''}
+  </div>`;
+}
+
+function renderPortfolio() {
+  const projs = db.projects;
+  const stc = {'on-track':0,'at-risk':0,'off-track':0,'complete':0,'on-hold':0};
+  projs.forEach(p => stc[p.status] = (stc[p.status]||0)+1);
+
+  const allDecisions = [];
+  projs.forEach(p => {
+    const latest = ((db.updates||{})[p.id]||[])[0];
+    if (latest?.items?.decisions) {
+      latest.items.decisions.filter(d => d.text?.trim()).forEach(d => {
+        allDecisions.push({ projName:p.name, projId:p.id, text:d.text, person:d.person, area:p.area });
+      });
+    }
+  });
+
+  const statStrip = `
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:26px">
+      ${pfStat('Total Initiatives', projs.length, projs.filter(p=>p.status!=='complete'&&p.status!=='on-hold').length+' active', '#101828')}
+      ${pfStat('On Track',      stc['on-track'],  pct(stc['on-track'], projs.length)+'% of portfolio', '#12B76A')}
+      ${pfStat('At Risk',       stc['at-risk'],   pct(stc['at-risk'],  projs.length)+'% of portfolio', '#F79009')}
+      ${pfStat('Off Track',     stc['off-track'], pct(stc['off-track'],projs.length)+'% of portfolio', '#F04438')}
+      ${pfStat('Open Decisions',allDecisions.length,'pending leadership action','#175CD3')}
+    </div>`;
+
+  const areaCards = AREAS.map(a => {
+    const ap = projs.filter(p => p.area===a.id);
+    const asc = {'on-track':0,'at-risk':0,'off-track':0,'complete':0,'on-hold':0};
+    ap.forEach(p => asc[p.status]=(asc[p.status]||0)+1);
+    const needsAttn = asc['at-risk']+asc['off-track'];
+    const tot = ap.length||1;
+    const barSegs = [
+      {c:'#12B76A',w:pct(asc['on-track'],tot),s:'on-track'},
+      {c:'#F79009',w:pct(asc['at-risk'],tot),s:'at-risk'},
+      {c:'#F04438',w:pct(asc['off-track'],tot),s:'off-track'},
+      {c:'#2E90FA',w:pct(asc['complete'],tot),s:'complete'},
+      {c:'#9E77ED',w:pct(asc['on-hold'],tot),s:'on-hold'},
+    ].filter(s=>s.w>0).map(s=>`<div title="${SC[s.s]?.label||s.s}: ${asc[s.s]}" onclick="setAreaAndStatus('${a.id}','${s.s}')" style="height:100%;width:${s.w}%;background:${s.c};cursor:pointer;transition:opacity .13s" onmouseenter="this.style.opacity='.75'" onmouseleave="this.style.opacity='1'"></div>`).join('');
+    return `<div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:16px 18px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#fff;background:var(--orange);padding:2px 9px;border-radius:20px;display:inline-block;margin-bottom:5px">${esc(a.label)}</div>
+          <div style="font-size:11.5px;color:var(--g500)">${esc(AREA_PM[a.id]||'—')}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:22px;font-weight:800;color:var(--g900);line-height:1">${ap.length}</div>
+          <div style="font-size:10.5px;color:var(--g400)">initiatives</div>
+        </div>
+      </div>
+      <div style="height:6px;background:var(--g100);border-radius:4px;overflow:hidden;margin-bottom:9px;display:flex">${barSegs}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        ${asc['on-track'] ? `<span style="font-size:11px;color:#027A48;font-weight:600">${asc['on-track']} on track</span>` : ''}
+        ${needsAttn      ? `<span style="font-size:11px;color:#B42318;font-weight:600">⚠ ${needsAttn} need attention</span>` : ''}
+        ${asc['complete'] ? `<span style="font-size:11px;color:#175CD3;font-weight:600">${asc['complete']} complete</span>` : ''}
+        ${asc['on-hold']  ? `<span style="font-size:11px;color:#5925DC;font-weight:600">${asc['on-hold']} on hold</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  const PRIO_ORDER = {'Critical':0,'High':1,'Medium':2};
+  const attnProjs = projs.filter(p=>['at-risk','off-track'].includes(p.status)).sort((a,b)=>(PRIO_ORDER[a.priority]??3)-(PRIO_ORDER[b.priority]??3));
+  const attnHtml = attnProjs.length ? attnProjs.map(p => {
+    const sc2=SC[p.status]||SC['on-track'], pc2=PC[p.priority]||'';
+    const note=((db.updates||{})[p.id]||[])[0]?.summary||p.note||'';
+    return `<div onclick="showLeadershipDetail('${p.id}')" class="pf-row-item">
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:4px;flex-wrap:wrap">
+        <span class="badge ${sc2.bc}">${sc2.label}</span>
+        ${pc2?`<span class="badge ${pc2}">${esc(p.priority)} Priority</span>`:''}
+      </div>
+      <div style="font-size:12.5px;font-weight:600;color:var(--g900);margin-bottom:2px">${esc(p.name)}</div>
+      ${note?`<div style="font-size:11.5px;color:var(--g500);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(note)}</div>`:''}
+    </div>`;
+  }).join('')
+  : `<div style="padding:28px 0;text-align:center;font-size:12px;color:var(--g400)">✓ No projects currently need attention</div>`;
+
+  const decisHtml = allDecisions.length ? allDecisions.map((d,i) => {
+    const sep = i<allDecisions.length-1?'border-bottom:1px solid rgba(254,200,75,.25);':'';
+    return `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:9px 0;${sep}">
+      <div style="display:flex;align-items:flex-start;gap:7px;min-width:0;flex:1">
+        <span style="color:#F79009;font-weight:700;flex-shrink:0;line-height:1.5">›</span>
+        <div style="min-width:0">
+          <div style="font-size:12px;color:var(--g800);line-height:1.5">${esc(d.text)}</div>
+          <div style="font-size:10.5px;color:var(--g400);margin-top:2px">${esc(d.projName)}</div>
+        </div>
+      </div>
+      ${d.person?`<span style="font-size:11px;font-weight:600;color:#92400E;background:rgba(254,200,75,.28);padding:2px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0">${esc(d.person)}</span>`:''}
+    </div>`;
+  }).join('')
+  : `<div style="padding:28px 0;text-align:center;font-size:12px;color:var(--g400)">No open decisions</div>`;
+
+  const recentUpdates = [];
+  projs.forEach(p => { const u=(db.updates||{})[p.id]||[]; if(u.length) recentUpdates.push({proj:p,upd:u[0]}); });
+  recentUpdates.sort((a,b)=>(b.upd.weekOf||'').localeCompare(a.upd.weekOf||''));
+  const recentHtml = recentUpdates.slice(0,6).map((r,i) => {
+    const sc3=SC[r.proj.status]||SC['on-track'], sep=i>0?'border-top:1px solid var(--g100);':'';
+    return `<div onclick="showLeadershipDetail('${r.proj.id}')" class="pf-row-item" style="${sep}">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="width:8px;height:8px;border-radius:50%;background:${sc3.ringColor};flex-shrink:0;margin-top:4px"></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:2px;flex-wrap:wrap">
+            <span style="font-size:12.5px;font-weight:600;color:var(--g900)">${esc(r.proj.name)}</span>
+            <span class="badge ${sc3.bc}" style="font-size:10.5px">${sc3.label}</span>
+          </div>
+          ${r.upd.summary?`<div style="font-size:11.5px;color:var(--g500);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.upd.summary)}</div>`:''}
+        </div>
+        <div style="font-size:10.5px;color:var(--g400);white-space:nowrap;flex-shrink:0;padding-top:2px">${fDateShort(r.upd.weekOf)}</div>
+      </div>
+    </div>`;
+  }).join('')||`<div style="padding:24px 0;text-align:center;font-size:12px;color:var(--g400)">No updates yet</div>`;
+
+  const PF_HM = [
+    {id:'off-track',label:'Off Track',bg:'#FEF3F2',col:'#B42318'},
+    {id:'at-risk',  label:'At Risk',  bg:'#FFFAEB',col:'#B54708'},
+    {id:'on-track', label:'On Track', bg:'#ECFDF3',col:'#027A48'},
+    {id:'complete', label:'Complete', bg:'#EFF8FF',col:'#175CD3'},
+    {id:'on-hold',  label:'On Hold',  bg:'#F4F3FF',col:'#5925DC'},
+  ];
+  const pfHmCell = (n,bg,col,fn) => n>0
+    ? `<div onclick="${fn}" style="background:${bg};border-radius:5px;padding:6px 3px;text-align:center;cursor:pointer;transition:opacity .13s" onmouseenter="this.style.opacity='.75'" onmouseleave="this.style.opacity='1'"><div style="font-size:13px;font-weight:800;color:${col};line-height:1">${n}</div></div>`
+    : `<div style="background:var(--g50);border-radius:5px;padding:6px 3px;text-align:center"><div style="font-size:11px;color:var(--g200);font-weight:600">—</div></div>`;
+  const pfHmHeaders = `<div></div>${PF_HM.map(s=>`<div style="text-align:center;padding:2px 2px 7px;font-size:9px;font-weight:700;color:${s.col};text-transform:uppercase;letter-spacing:.05em">${s.label}</div>`).join('')}`;
+  const pfHmAreaRows = AREAS.map(a=>{
+    const ap=projs.filter(p=>p.area===a.id);
+    return `<div style="display:flex;align-items:center;gap:5px;padding:1px 0;min-width:0">
+      <span style="width:6px;height:6px;border-radius:50%;background:var(--orange);flex-shrink:0"></span>
+      <span style="font-size:10.5px;font-weight:600;color:var(--g700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(a.label)}</span>
+    </div>
+    ${PF_HM.map(s=>{const n=ap.filter(p=>p.status===s.id).length;return pfHmCell(n,s.bg,s.col,`setAreaAndStatus('${a.id}','${s.id}')`)}).join('')}`;
+  }).join('');
+  const pfHmPrioRows = [{id:'Critical',cls:'bp-critical'},{id:'High',cls:'bp-high'},{id:'Medium',cls:'bp-medium'}].map(pr=>{
+    const pp=projs.filter(p=>p.priority===pr.id);
+    return `<div style="display:flex;align-items:center;padding:1px 0"><span class="badge ${pr.cls}" style="font-size:9px;padding:1px 6px">${pr.id}</span></div>
+    ${PF_HM.map(s=>{const n=pp.filter(p=>p.status===s.id).length;return pfHmCell(n,s.bg,s.col,`setPrioAndStatus('${pr.id}','${s.id}')`)}).join('')}`;
+  }).join('');
+  const heatmapHtml = `
+    <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:16px 18px;height:100%">
+      <div style="font-size:13px;font-weight:700;color:var(--g900);margin-bottom:2px">Initiative Heatmap</div>
+      <div style="font-size:11px;color:var(--g400);margin-bottom:12px">Click any cell to drill in</div>
+      <div style="display:grid;grid-template-columns:110px repeat(5,1fr);gap:4px;align-items:center">
+        ${pfHmHeaders}${pfHmAreaRows}
+        <div style="grid-column:1/-1;height:1px;background:var(--g100);margin:3px 0"></div>
+        ${pfHmPrioRows}
+      </div>
+    </div>`;
+
+  document.getElementById('areas').innerHTML = `
+    ${statStrip}
+    <div class="sec-head"><span class="sec-title">Portfolio Health</span></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px">${areaCards}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+      <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:18px 20px">
+        <div style="font-size:13px;font-weight:700;color:var(--g900);margin-bottom:2px">Needs Attention</div>
+        <div style="font-size:11.5px;color:var(--g400);margin-bottom:14px">${attnProjs.length} initiative${attnProjs.length!==1?'s':''} at risk or off track — click any to view detail</div>
+        ${attnHtml}
+      </div>
+      <div style="background:#FFFBF5;border:1px solid #FEC84B;border-radius:12px;padding:18px 20px">
+        <div style="font-size:13px;font-weight:700;color:var(--g900);margin-bottom:2px">Open Decisions</div>
+        <div style="font-size:11.5px;color:var(--g400);margin-bottom:14px">${allDecisions.length} decision${allDecisions.length!==1?'s':''} pending leadership action</div>
+        ${decisHtml}
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 540px;gap:20px;margin-bottom:24px">
+      <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:18px 20px">
+        <div style="font-size:13px;font-weight:700;color:var(--g900);margin-bottom:2px">Recent Updates</div>
+        <div style="font-size:11.5px;color:var(--g400);margin-bottom:14px">Latest status updates across all initiatives — click any to view detail</div>
+        ${recentHtml}
+      </div>
+      ${heatmapHtml}
+    </div>`;
+}
+
+// ── V2 Dashboard (NOC-style) ──────────────────────────────────────────────────
 function kpiCard(label, value, sub, accent, trend) {
   return `<div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:20px 22px;box-shadow:0 1px 2px rgba(16,24,40,.05)">
     <div style="font-size:10.5px;font-weight:700;color:var(--g500);text-transform:uppercase;letter-spacing:.07em;margin-bottom:9px">${label}</div>
@@ -778,7 +975,7 @@ function kpiCard(label, value, sub, accent, trend) {
   </div>`;
 }
 
-function renderPortfolio() {
+function renderPortfolioV2() {
   const projs = db.projects;
   const stc = {'on-track':0,'at-risk':0,'off-track':0,'complete':0,'on-hold':0};
   projs.forEach(p => stc[p.status] = (stc[p.status]||0)+1);
