@@ -908,20 +908,20 @@ function renderPortfolio() {
   ];
 
   const hmCell = (count, bg, col, clickFn) => count > 0
-    ? `<div onclick="${clickFn}" style="background:${bg};border-radius:5px;padding:6px 3px;text-align:center;cursor:pointer;transition:opacity .13s" onmouseenter="this.style.opacity='.75'" onmouseleave="this.style.opacity='1'">
-        <div style="font-size:13px;font-weight:800;color:${col};line-height:1">${count}</div>
+    ? `<div onclick="${clickFn}" style="background:${bg};border-radius:7px;padding:12px 6px;text-align:center;cursor:pointer;transition:opacity .13s" onmouseenter="this.style.opacity='.75'" onmouseleave="this.style.opacity='1'">
+        <div style="font-size:20px;font-weight:800;color:${col};line-height:1">${count}</div>
        </div>`
-    : `<div style="background:var(--g50);border-radius:5px;padding:6px 3px;text-align:center">
-        <div style="font-size:11px;color:var(--g200);font-weight:600">—</div>
+    : `<div style="background:var(--g50);border-radius:7px;padding:12px 6px;text-align:center">
+        <div style="font-size:15px;color:var(--g200);font-weight:600">—</div>
        </div>`;
 
-  const hmColHeaders = `<div></div>${HM_COLS.map(s=>`<div style="text-align:center;padding:2px 2px 7px;font-size:9px;font-weight:700;color:${s.col};text-transform:uppercase;letter-spacing:.05em">${s.label}</div>`).join('')}`;
+  const hmColHeaders = `<div></div>${HM_COLS.map(s=>`<div style="text-align:center;padding:4px 4px 10px;font-size:10px;font-weight:700;color:${s.col};text-transform:uppercase;letter-spacing:.06em">${s.label}</div>`).join('')}`;
 
   const hmAreaRows = AREAS.map(a => {
     const ap = projs.filter(p => p.area === a.id);
-    return `<div style="display:flex;align-items:center;gap:5px;padding:1px 0;min-width:0">
-      <span style="width:6px;height:6px;border-radius:50%;background:var(--orange);flex-shrink:0"></span>
-      <span style="font-size:10.5px;font-weight:600;color:var(--g700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(a.label)}</span>
+    return `<div style="display:flex;align-items:center;gap:7px;padding:2px 0;min-width:0">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--orange);flex-shrink:0"></span>
+      <span style="font-size:11.5px;font-weight:600;color:var(--g700);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(a.label)}</span>
     </div>
     ${HM_COLS.map(s => {
       const n = ap.filter(p=>p.status===s.id).length;
@@ -930,13 +930,13 @@ function renderPortfolio() {
   }).join('');
 
   const hmPrioRows = [
-    {id:'Critical', cls:'bp-critical'},
-    {id:'High',     cls:'bp-high'},
-    {id:'Medium',   cls:'bp-medium'},
+    {id:'Critical', cls:'bp-critical', dot:'#F04438'},
+    {id:'High',     cls:'bp-high',     dot:'#F79009'},
+    {id:'Medium',   cls:'bp-medium',   dot:'#98A2B3'},
   ].map(pr => {
     const pp = projs.filter(p => p.priority === pr.id);
-    return `<div style="display:flex;align-items:center;padding:1px 0">
-      <span class="badge ${pr.cls}" style="font-size:9px;padding:1px 6px">${pr.id}</span>
+    return `<div style="display:flex;align-items:center;padding:2px 0">
+      <span class="badge ${pr.cls}" style="font-size:10px">${pr.id} Priority</span>
     </div>
     ${HM_COLS.map(s => {
       const n = pp.filter(p=>p.status===s.id).length;
@@ -945,19 +945,22 @@ function renderPortfolio() {
   }).join('');
 
   const heatmapHtml = `
-    <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:16px 18px;height:100%">
-      <div style="font-size:13px;font-weight:700;color:var(--g900);margin-bottom:2px">Initiative Heatmap</div>
-      <div style="font-size:11px;color:var(--g400);margin-bottom:12px">Click any cell to drill in</div>
-      <div style="display:grid;grid-template-columns:110px repeat(5,1fr);gap:4px;align-items:center">
+    <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:18px 20px;margin-bottom:26px">
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:var(--g900);margin-bottom:2px">Initiative Heatmap</div>
+        <div style="font-size:11.5px;color:var(--g400)">Click any cell to view matching initiatives in Initiatives view</div>
+      </div>
+      <div style="display:grid;grid-template-columns:170px repeat(5,1fr);gap:5px;align-items:center">
         ${hmColHeaders}
         ${hmAreaRows}
-        <div style="grid-column:1/-1;height:1px;background:var(--g100);margin:3px 0"></div>
+        <div style="grid-column:1/-1;height:1px;background:var(--g100);margin:4px 0"></div>
         ${hmPrioRows}
       </div>
     </div>`;
 
   document.getElementById('areas').innerHTML = `
     ${statStrip}
+    ${heatmapHtml}
     <div class="sec-head"><span class="sec-title">Portfolio Health</span></div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px">${areaCards}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
@@ -972,13 +975,10 @@ function renderPortfolio() {
         ${decisHtml}
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 380px;gap:20px;margin-bottom:24px">
-      <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:18px 20px">
-        <div style="font-size:13px;font-weight:700;color:var(--g900);margin-bottom:2px">Recent Updates</div>
-        <div style="font-size:11.5px;color:var(--g400);margin-bottom:14px">Latest status updates across all initiatives — click any to view detail</div>
-        ${recentHtml}
-      </div>
-      ${heatmapHtml}
+    <div style="background:#fff;border:1px solid var(--g200);border-radius:12px;padding:18px 20px">
+      <div style="font-size:13px;font-weight:700;color:var(--g900);margin-bottom:2px">Recent Updates</div>
+      <div style="font-size:11.5px;color:var(--g400);margin-bottom:14px">Latest status updates across all initiatives — click any to view detail</div>
+      ${recentHtml}
     </div>`;
 }
 const fDate = d => { if(!d) return '—'; return new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
